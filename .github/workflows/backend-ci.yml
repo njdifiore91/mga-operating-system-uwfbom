@@ -1,0 +1,124 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/backend/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/backend/**'
+
+env:
+  NODE_VERSION: '18.x'
+  CACHE_KEY: "npm-deps-${{ hashFiles('**/package-lock.json') }}"
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'src/backend/package-lock.json'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ env.CACHE_KEY }}
+          restore-keys: |
+            npm-deps-
+
+      - name: Install dependencies
+        working-directory: src/backend
+        run: npm ci
+
+      - name: Run linting
+        working-directory: src/backend
+        run: npm run lint
+        
+      - name: Run type checking
+        working-directory: src/backend
+        run: npm run build --if-present
+
+      - name: Run tests with coverage
+        working-directory: src/backend
+        run: npm run test:coverage
+        env:
+          CI: true
+
+      - name: Verify coverage thresholds
+        working-directory: src/backend
+        run: |
+          COVERAGE_SUMMARY=$(cat coverage/coverage-summary.json)
+          BRANCHES=$(echo $COVERAGE_SUMMARY | jq '.total.branches.pct')
+          FUNCTIONS=$(echo $COVERAGE_SUMMARY | jq '.total.functions.pct')
+          LINES=$(echo $COVERAGE_SUMMARY | jq '.total.lines.pct')
+          STATEMENTS=$(echo $COVERAGE_SUMMARY | jq '.total.statements.pct')
+          
+          if (( $(echo "$BRANCHES < 80" | bc -l) )) || \
+             (( $(echo "$FUNCTIONS < 80" | bc -l) )) || \
+             (( $(echo "$LINES < 80" | bc -l) )) || \
+             (( $(echo "$STATEMENTS < 80" | bc -l) )); then
+            echo "Coverage thresholds not met"
+            exit 1
+          fi
+
+      - name: Run security audit
+        working-directory: src/backend
+        run: npm run security:audit
+        continue-on-error: true
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:javascript"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: src/backend/junit.xml
+          retention-days: 30
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-reports
+          path: |
+            src/backend/coverage/lcov.info
+            src/backend/coverage/coverage-summary.json
+          retention-days: 30
+
+      - name: Cache build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            src/backend/dist
+            src/backend/node_modules
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
