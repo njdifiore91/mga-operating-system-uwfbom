@@ -1,0 +1,23 @@
+{
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/coverage",
+    "src/dist"
+  ],
+  "exec": "ts-node ./src/server.ts",
+  "events": {
+    "restart": "echo 'App restarted due to changes'"
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "TS_NODE_PROJECT": "./tsconfig.json"
+  },
+  "delay": "1500",
+  "verbose": true,
+  "restartable": "rs",
+  "colours": true,
+  "legacyWatch": false
+}
