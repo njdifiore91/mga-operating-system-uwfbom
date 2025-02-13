@@ -1,0 +1,74 @@
+apiVersion: v2
+name: mga-backend
+description: MGA Operating System Backend Service Helm Chart - A comprehensive backend deployment solution for the MGA OS platform including policy administration, underwriting, and compliance services
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+kubeVersion: ">=1.27.0-0"
+
+# Dependencies section defines required infrastructure components
+dependencies:
+  - name: postgresql
+    version: 12.5.6
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+    tags:
+      - database
+      - persistence
+
+  - name: redis
+    version: 17.11.3
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    tags:
+      - cache
+      - session-store
+
+  - name: kafka
+    version: 22.1.5
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled
+    tags:
+      - messaging
+      - events
+
+  - name: prometheus
+    version: 19.7.2
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+    tags:
+      - monitoring
+      - metrics
+
+  - name: elasticsearch
+    version: 19.5.8
+    repository: https://charts.bitnami.com/bitnami
+    condition: elasticsearch.enabled
+    tags:
+      - logging
+      - search
+
+maintainers:
+  - name: MGA OS Team
+    email: devops@mga-os.com
+    url: https://github.com/mga-os
+
+keywords:
+  - mga
+  - insurance
+  - backend
+  - api
+  - policy-administration
+  - underwriting
+  - compliance
+
+annotations:
+  artifacthub.io/changes: "Initial release of MGA OS backend service with comprehensive infrastructure support"
+  artifacthub.io/containsSecurityUpdates: "true"
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/recommendations: "true"
+  artifacthub.io/signKey: "fingerprint: 0F7F1F5B8E8E8E8E"
+  artifacthub.io/links: "homepage=https://mga-os.com,documentation=https://docs.mga-os.com"
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
