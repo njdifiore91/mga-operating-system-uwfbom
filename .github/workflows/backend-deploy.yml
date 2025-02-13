@@ -1,0 +1,191 @@
+name: Backend Deploy
+
+on:
+  workflow_run:
+    workflows: ["Backend CI"]
+    types: [completed]
+    branches: [main, develop]
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  HELM_VERSION: '3.12.3'
+  KUBECTL_VERSION: '1.27.3'
+  DEPLOYMENT_TIMEOUT: '10m'
+  ROLLBACK_REVISION: '0'
+  HEALTH_CHECK_RETRIES: '5'
+  CHART_PATH: './infrastructure/helm/backend'
+
+jobs:
+  deploy_to_staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    if: github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
+        with:
+          mask-password: true
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name mga-staging \
+            --region ${{ env.AWS_REGION }} \
+            --role-arn ${{ secrets.EKS_ROLE_ARN }}
+
+      - name: Validate Helm chart
+        run: |
+          helm lint ${{ env.CHART_PATH }}
+          helm dependency update ${{ env.CHART_PATH }}
+
+      - name: Deploy to staging
+        run: |
+          helm upgrade mga-backend ${{ env.CHART_PATH }} \
+            --install \
+            --namespace mga-staging \
+            --create-namespace \
+            --set image.repository=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }} \
+            --set image.tag=${{ github.sha }} \
+            --set environment=staging \
+            --set replicaCount=2 \
+            --atomic \
+            --timeout ${{ env.DEPLOYMENT_TIMEOUT }} \
+            --wait \
+            --wait-for-jobs \
+            --debug
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/mga-backend -n mga-staging --timeout=${{ env.DEPLOYMENT_TIMEOUT }}
+          for i in $(seq 1 ${{ env.HEALTH_CHECK_RETRIES }}); do
+            if kubectl get pods -n mga-staging -l app=mga-backend | grep -q "Running"; then
+              echo "Deployment health check passed"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Deployment health check failed"
+          exit 1
+
+  deploy_to_production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    needs: [deploy_to_staging]
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 45
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_PROD_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
+        with:
+          mask-password: true
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name mga-production \
+            --region ${{ env.AWS_REGION }} \
+            --role-arn ${{ secrets.EKS_PROD_ROLE_ARN }}
+
+      - name: Validate Helm chart
+        run: |
+          helm lint ${{ env.CHART_PATH }}
+          helm dependency update ${{ env.CHART_PATH }}
+
+      - name: Deploy to production
+        run: |
+          helm upgrade mga-backend ${{ env.CHART_PATH }} \
+            --install \
+            --namespace mga-production \
+            --create-namespace \
+            --set image.repository=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }} \
+            --set image.tag=${{ github.sha }} \
+            --set environment=production \
+            --set replicaCount=4 \
+            --set resources.limits.cpu=2 \
+            --set resources.limits.memory=4Gi \
+            --atomic \
+            --timeout ${{ env.DEPLOYMENT_TIMEOUT }} \
+            --wait \
+            --wait-for-jobs \
+            --debug
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/mga-backend -n mga-production --timeout=${{ env.DEPLOYMENT_TIMEOUT }}
+          for i in $(seq 1 ${{ env.HEALTH_CHECK_RETRIES }}); do
+            if kubectl get pods -n mga-production -l app=mga-backend | grep -q "Running"; then
+              echo "Deployment health check passed"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Deployment health check failed"
+          exit 1
+
+      - name: Monitor deployment
+        run: |
+          kubectl get pods,svc,hpa -n mga-production
+          kubectl top pods -n mga-production
+          kubectl describe deployment mga-backend -n mga-production
+
+      - name: Archive deployment artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: |
+            ${{ env.CHART_PATH }}/values.yaml
+            ${{ env.CHART_PATH }}/Chart.yaml
+          retention-days: 30
