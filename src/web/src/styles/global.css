@@ -1,0 +1,204 @@
+/* Global CSS styles for MGA OS platform implementing Material Design 3.0 principles */
+
+/* CSS Reset and Base Styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* CSS Custom Properties */
+:root {
+  --spacing-unit: 8px;
+  --container-width: 1440px;
+  --content-max-width: 1200px;
+  --border-radius: 4px;
+  --transition-speed: 0.2s;
+  --focus-ring-color: #0066CC;
+  --focus-ring-width: 2px;
+  --grid-gap: calc(var(--spacing-unit) * 2);
+
+  /* Theme Colors from theme.ts */
+  --color-primary: #0066CC;
+  --color-primary-light: #3399FF;
+  --color-primary-dark: #004C99;
+  --color-secondary: #666666;
+  --color-error: #DC3545;
+  --color-warning: #FFC107;
+  --color-success: #28A745;
+  --color-background: #FFFFFF;
+  --color-background-paper: #F5F5F5;
+  --color-text-primary: #333333;
+  --color-text-secondary: #666666;
+}
+
+/* Base HTML Elements */
+html {
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+}
+
+/* Container Classes */
+.container {
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-unit);
+}
+
+.content-container {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-unit);
+}
+
+/* Grid System */
+.grid {
+  display: grid;
+  gap: var(--grid-gap);
+}
+
+/* Accessibility Classes */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  transition: top var(--transition-speed);
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Focus Management */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Typography Scale */
+.text-h1 {
+  font-size: clamp(2rem, 5vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01562em;
+}
+
+.text-h2 {
+  font-size: clamp(1.75rem, 4vw, 2rem);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.00833em;
+}
+
+.text-h3 {
+  font-size: clamp(1.5rem, 3vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* Responsive Breakpoints */
+@media screen and (min-width: 320px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (min-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+  
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  html {
+    font-size: 16px;
+  }
+  
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+  }
+  
+  .container,
+  .content-container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+  
+  @page {
+    margin: 2cm;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (forced-colors: active) {
+  :root {
+    --focus-ring-color: Highlight;
+  }
+  
+  .skip-link:focus {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: Canvas;
+  }
+}
