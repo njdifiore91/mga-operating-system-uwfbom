@@ -1,0 +1,197 @@
+# Grafana Helm Chart Values (grafana/grafana v9.5.0)
+# Enterprise-grade configuration for MGA OS monitoring platform
+
+replicaCount: 2
+
+image:
+  repository: grafana/grafana
+  tag: 9.5.0
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: grafana
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/mga-grafana-role"
+
+podSecurityContext:
+  fsGroup: 472
+  runAsUser: 472
+  runAsNonRoot: true
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+persistence:
+  enabled: true
+  storageClassName: gp2
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: grafana
+          topologyKey: kubernetes.io/hostname
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server.monitoring.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+        jsonData:
+          timeInterval: "30s"
+          queryTimeout: "30s"
+          exemplarTraceIdDestinations:
+            - name: trace_id
+              datasourceUid: jaeger
+
+      - name: Jaeger
+        type: jaeger
+        url: http://jaeger-query.monitoring.svc.cluster.local:16686
+        access: proxy
+        jsonData:
+          tracesToLogs:
+            datasourceUid: elasticsearch
+            tags: ['job', 'instance', 'pod', 'namespace']
+            mappedTags: [{ key: 'service.name', value: 'service' }]
+
+      - name: Elasticsearch
+        type: elasticsearch
+        url: http://elasticsearch-master.monitoring.svc.cluster.local:9200
+        access: proxy
+        database: "mga-os-logs-*"
+        jsonData:
+          timeField: "@timestamp"
+          logMessageField: "message"
+          logLevelField: "level"
+          interval: "Daily"
+          esVersion: "7.10.0"
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: mga-os
+        orgId: 1
+        folder: MGA OS
+        type: file
+        disableDeletion: true
+        editable: false
+        updateIntervalSeconds: 30
+        options:
+          path: /var/lib/grafana/dashboards/mga-os
+
+dashboards:
+  mga-os:
+    api-performance:
+      file: dashboards/api-performance.json
+      gnetId: null
+      overwrite: true
+
+    system-resources:
+      file: dashboards/system-resources.json
+      gnetId: null
+      overwrite: true
+
+    business-metrics:
+      file: dashboards/business-metrics.json
+      gnetId: null
+      overwrite: true
+
+grafana.ini:
+  server:
+    domain: grafana.mga-os.internal
+    root_url: https://grafana.mga-os.internal
+  auth:
+    disable_login_form: false
+    oauth_auto_login: true
+  auth.generic_oauth:
+    enabled: true
+    name: OAuth
+    allow_sign_up: true
+    client_id: ${OAUTH_CLIENT_ID}
+    client_secret: ${OAUTH_CLIENT_SECRET}
+    scopes: openid profile email
+    auth_url: ${OAUTH_AUTH_URL}
+    token_url: ${OAUTH_TOKEN_URL}
+    api_url: ${OAUTH_API_URL}
+  security:
+    admin_user: admin
+    admin_password: ${GRAFANA_ADMIN_PASSWORD}
+    secret_key: ${GRAFANA_SECRET_KEY}
+    disable_initial_admin_creation: false
+  users:
+    allow_sign_up: false
+    auto_assign_org: true
+    auto_assign_org_role: Viewer
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  hosts:
+    - grafana.mga-os.internal
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.mga-os.internal
+
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  selector:
+    matchLabels:
+      app: grafana
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 25s
+      honorLabels: true
+
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: mga-monitoring
+        - podSelector:
+            matchLabels:
+              app: prometheus
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
