@@ -1,0 +1,78 @@
+node_modules
+.yarn-cache
+package-lock.json
+
+# Build outputs
+dist
+.webpack
+*.tsbuildinfo
+
+# Test files
+tests
+coverage
+**/*.test.ts
+**/*.spec.ts
+**/__tests__/*
+**/__mocks__/*
+
+# Development configs
+.env
+.env.*
+nodemon.json
+.eslintrc*
+.prettierrc*
+jest.config.ts
+
+# Editor configs
+.vscode
+.idea
+*.swp
+*~
+
+# Version control
+.git
+.gitignore
+
+# Documentation
+README.md
+docs
+CHANGELOG.md
+LICENSE
+
+# Docker files
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.ca-bundle
+
+# Logs
+*.log
+logs
+
+# Temporary files
+tmp
+.tmp
+*.tmp
+
+# Cache files
+.cache
+.npm
+.eslintcache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug files
+.clinic
+.nyc_output
+
+# Security files
+.snyk
+.npmrc
+.yarnrc
