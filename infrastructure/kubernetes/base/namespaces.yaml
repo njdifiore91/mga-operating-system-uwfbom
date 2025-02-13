@@ -1,0 +1,72 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mga-production
+  labels:
+    name: mga-production
+    environment: production
+    managed-by: terraform
+    app: mga-os
+    criticality: high
+    compliance: soc2
+    backup-policy: tier1
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: environment=production
+    net.beta.kubernetes.io/network-policy: strict
+    backup.velero.io/backup-ttl: 720h
+    monitoring.mga.io/prometheus-rules: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mga-staging
+  labels:
+    name: mga-staging
+    environment: staging
+    managed-by: terraform
+    app: mga-os
+    criticality: medium
+    compliance: internal
+    backup-policy: tier2
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: environment=staging
+    net.beta.kubernetes.io/network-policy: moderate
+    backup.velero.io/backup-ttl: 168h
+    monitoring.mga.io/prometheus-rules: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mga-monitoring
+  labels:
+    name: mga-monitoring
+    environment: shared
+    managed-by: terraform
+    app: mga-os
+    criticality: high
+    component: observability
+    backup-policy: tier2
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: environment=shared
+    net.beta.kubernetes.io/network-policy: monitoring
+    backup.velero.io/backup-ttl: 168h
+    monitoring.mga.io/self-monitor: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mga-ingress
+  labels:
+    name: mga-ingress
+    environment: shared
+    managed-by: terraform
+    app: mga-os
+    criticality: high
+    component: networking
+    backup-policy: tier1
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: environment=shared
+    net.beta.kubernetes.io/network-policy: ingress
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    monitoring.mga.io/prometheus-rules: enabled
