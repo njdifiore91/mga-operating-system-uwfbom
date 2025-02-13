@@ -1,0 +1,38 @@
+* @mga-os/lead-architects @mga-os/security-team
+
+# Backend service code owned by backend team with mandatory security review
+/src/backend/* @mga-os/backend-team @mga-os/tech-leads @mga-os/security-team
+
+# Frontend application code owned by frontend team with mandatory security review
+/src/web/* @mga-os/frontend-team @mga-os/tech-leads @mga-os/security-team
+
+# Infrastructure code owned by DevOps team with mandatory security and architecture review
+/infrastructure/* @mga-os/devops-team @mga-os/lead-architects @mga-os/security-team
+
+# CI/CD workflow configurations owned by DevOps team with security review
+/.github/workflows/* @mga-os/devops-team @mga-os/security-team
+
+# Core business services require domain expert and security review
+/src/backend/src/services/* @mga-os/backend-team @mga-os/domain-experts @mga-os/security-team
+
+# OneShield integration code owned by integration team with security review
+/src/backend/src/integrations/oneshield/* @mga-os/integration-team @mga-os/tech-leads @mga-os/security-team
+
+# API endpoints and controllers require API architect and security review
+/src/backend/src/api/* @mga-os/backend-team @mga-os/api-architects @mga-os/security-team
+
+# UI components require frontend, UX, and security team review
+/src/web/src/components/* @mga-os/frontend-team @mga-os/ux-team @mga-os/security-team
+
+# Test files require QA and security team review
+*.test.ts @mga-os/qa-team @mga-os/security-team
+
+# Configuration files require DevOps, security, and compliance review
+/src/backend/src/config/* @mga-os/devops-team @mga-os/security-team @mga-os/compliance-team
+/src/web/src/config/* @mga-os/frontend-team @mga-os/security-team @mga-os/compliance-team
+
+# Security-related code requires dedicated security team and lead architect review
+/src/backend/src/security/* @mga-os/security-team @mga-os/lead-architects
+
+# Security documentation requires security and compliance team review
+/docs/security/* @mga-os/security-team @mga-os/compliance-team
