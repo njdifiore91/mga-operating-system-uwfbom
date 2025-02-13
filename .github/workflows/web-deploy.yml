@@ -1,0 +1,189 @@
+name: Web Application Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/web/**'
+      - 'infrastructure/docker/web.dockerfile'
+      - '.github/workflows/web-deploy.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  SECONDARY_REGIONS: us-west-2,eu-west-1
+  ECR_REPOSITORY: mga-os-web
+  EKS_CLUSTER: mga-os-prod
+  NODE_VERSION: '18.x'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-scan:
+    name: Build and Security Scan
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.build.outputs.image_tag }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/web
+        run: npm ci --no-audit --no-fund
+
+      - name: Run tests and linting
+        working-directory: src/web
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run test:coverage
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-web-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: infrastructure/docker/web.dockerfile
+          push: true
+          tags: |
+            ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          build-args: |
+            APP_VERSION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.11.0
+        with:
+          image-ref: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy-primary:
+    name: Deploy to Primary Region
+    needs: build-and-scan
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-web-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - name: Deploy to EKS
+        run: |
+          kubectl set image deployment/mga-os-web \
+            mga-os-web=${{ needs.build-and-scan.outputs.image_tag }} \
+            --record
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/mga-os-web --timeout=300s
+          kubectl get deployment mga-os-web -o jsonpath='{.status.availableReplicas}'
+
+  deploy-secondary:
+    name: Deploy to Secondary Regions
+    needs: [build-and-scan, deploy-primary]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region: ${{ fromJson('[' + env.SECONDARY_REGIONS + ']') }}
+    environment: production
+    
+    steps:
+      - name: Configure AWS credentials for secondary region
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-web-deploy
+          aws-region: ${{ matrix.region }}
+
+      - name: Replicate ECR image
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          
+          aws ecr get-login-password --region ${{ matrix.region }} | \
+          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ matrix.region }}.amazonaws.com
+          
+          docker pull ${{ needs.build-and-scan.outputs.image_tag }}
+          docker tag ${{ needs.build-and-scan.outputs.image_tag }} \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ matrix.region }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ matrix.region }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Update kubeconfig for secondary region
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ matrix.region }}
+
+      - name: Deploy to secondary region EKS
+        run: |
+          kubectl set image deployment/mga-os-web \
+            mga-os-web=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ matrix.region }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }} \
+            --record
+
+      - name: Verify secondary deployment
+        run: |
+          kubectl rollout status deployment/mga-os-web --timeout=300s
+          kubectl get deployment mga-os-web -o jsonpath='{.status.availableReplicas}'
+
+  notify:
+    name: Send Deployment Notifications
+    needs: [deploy-primary, deploy-secondary]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Notify success
+        if: ${{ success() }}
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"✅ Web application deployment completed successfully across all regions"}'
+
+      - name: Notify failure
+        if: ${{ failure() }}
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"❌ Web application deployment failed. Please check the GitHub Actions logs"}'
