@@ -1,0 +1,57 @@
+apiVersion: v2
+name: mga-web
+description: MGA Operating System Web Frontend Application Helm Chart - A production-grade deployment configuration for the TypeScript/React-based web interface, supporting high availability, automated scaling, and comprehensive monitoring
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+kubeVersion: ">=1.27.0-0"
+
+dependencies:
+  - name: ingress-nginx
+    version: 4.7.1
+    repository: https://kubernetes.github.io/ingress-nginx
+    condition: ingress.enabled
+    tags:
+      - ingress
+      - routing
+
+  - name: cert-manager
+    version: 1.12.3
+    repository: https://charts.jetstack.io
+    condition: certManager.enabled
+    tags:
+      - security
+      - certificates
+
+  - name: prometheus
+    version: 19.7.2
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+    tags:
+      - monitoring
+      - metrics
+
+maintainers:
+  - name: MGA OS Team
+    email: devops@mga-os.com
+    url: https://github.com/mga-os
+
+keywords:
+  - mga
+  - insurance
+  - frontend
+  - web
+  - react
+  - typescript
+  - high-availability
+  - cloud-native
+
+annotations:
+  artifacthub.io/changes: "Initial release of MGA OS web frontend application with high availability support"
+  artifacthub.io/containsSecurityUpdates: "true"
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/maintainers: '[{"name":"MGA OS Team","email":"devops@mga-os.com"}]'
+  artifacthub.io/recommendations: '[{"url":"https://kubernetes.io/docs/concepts/services-networking/ingress/"}]'
+  artifacthub.io/signKey: "fingerprint: 0123456789abcdef0123456789abcdef01234567"
+  artifacthub.io/links: '[{"name":"Documentation","url":"https://docs.mga-os.com"}]'
