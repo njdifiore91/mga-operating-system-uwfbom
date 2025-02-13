@@ -1,0 +1,103 @@
+# Istio Service Mesh Configuration Values for MGA OS Platform
+# Version: 1.18
+
+# Global mesh configuration settings
+global:
+  proxy:
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "2000m"
+        memory: "1024Mi"
+    accessLogging:
+      enabled: true
+      format: JSON
+      outputPath: "/dev/stdout"
+      fileRotationPolicy:
+        maxSize: "100MB"
+        maxBackups: 5
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sh", "-c", "sleep 5"]
+
+  mtls:
+    enabled: true
+    mode: "STRICT"
+    autoMtls: true
+    minProtocolVersion: "TLSV1_3"
+    cipherSuites:
+      - "ECDHE-ECDSA-AES256-GCM-SHA384"
+      - "ECDHE-RSA-AES256-GCM-SHA384"
+
+  certificateRotation:
+    enabled: true
+    workloadCertTTL: "24h"
+    gracePeriod: "1h"
+
+# Control plane configuration
+pilot:
+  autoscaleEnabled: true
+  autoscaleMin: 3
+  autoscaleMax: 10
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2048Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4096Mi"
+  traceSampling: 1.0
+  keepaliveMaxServerConnectionAge: "30m"
+  configMap:
+    meshNetworks:
+      network1:
+        endpoints:
+          - fromRegistry: "Kubernetes"
+        gateways:
+          - address: "0.0.0.0"
+            port: 443
+
+# Distributed tracing configuration
+tracing:
+  enabled: true
+  provider: "jaeger"
+  jaeger:
+    accessMode: "agent"
+    agent:
+      hostPort: 6831
+    memory:
+      max_traces: 50000
+    sampling:
+      probabilistic:
+        samplingRate: 1.0
+    retention:
+      schedule: "0 0 * * *"
+      days: 7
+
+# Metrics collection configuration
+prometheus:
+  enabled: true
+  scrapeInterval: "15s"
+  retention: "30d"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  alerting:
+    enabled: true
+    rules:
+      - name: "HighLatency"
+        expr: "istio_request_duration_milliseconds_count > 2000"
+        for: "5m"
+        severity: "warning"
+      - name: "HighErrorRate"
+        expr: "rate(istio_requests_total{response_code=~\"5.*\"}[5m]) > 0.1"
+        for: "5m"
+        severity: "critical"
