@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mga-web
+  namespace: mga-production
+  labels:
+    app: mga-web
+    component: frontend
+    environment: production
+    version: v1
+    tier: frontend
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '80'
+    prometheus.io/path: '/metrics'
+    fluentbit.io/parser: 'nginx'
+    deployment.kubernetes.io/revision: '1'
+spec:
+  replicas: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: mga-web
+      component: frontend
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: mga-web
+        component: frontend
+        environment: production
+        version: v1
+        tier: frontend
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '80'
+    spec:
+      containers:
+      - name: mga-web
+        image: mga-web:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          protocol: TCP
+          name: http
+        resources:
+          requests:
+            cpu: '500m'
+            memory: '1Gi'
+          limits:
+            cpu: '1000m'
+            memory: '2Gi'
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health/startup
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 30
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: VITE_API_URL
+          value: /api
+        - name: REGION
+          valueFrom:
+            fieldRef:
+              fieldPath: "metadata.labels['topology.kubernetes.io/region']"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 101
+          runAsGroup: 101
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: mga-web
+              topologyKey: topology.kubernetes.io/zone
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: mga-web
