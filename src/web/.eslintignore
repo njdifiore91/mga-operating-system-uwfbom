@@ -1,0 +1,55 @@
+node_modules/**/*
+
+# Build outputs
+dist/**/*
+build/**/*
+
+# Test artifacts
+coverage/**/*
+
+# Configuration files
+*.config.js
+*.config.ts
+vite-env.d.ts
+.eslintrc.json
+
+# Static assets
+src/assets/**/*
+public/**/*
+*.css
+*.scss
+*.svg
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.eot
+
+# Generated files
+*.generated.ts
+*.generated.tsx
+
+# Environment files
+.env*
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Cache directories
+.cache/**/*
+.temp/**/*
+
+# IDE and editor files
+.vscode/**/*
+.idea/**/*
+*.swp
+*.swo
+
+# Package files
+package-lock.json
+yarn.lock
