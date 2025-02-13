@@ -1,0 +1,69 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: mga-db-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    kubernetes.io/description: "High-performance storage for PostgreSQL database clusters"
+  labels:
+    app.kubernetes.io/part-of: mga-os
+    app.kubernetes.io/component: storage
+    storage.kubernetes.io/tier: premium
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  iopsPerGB: "3000"
+  throughputPerGB: "125"
+  encrypted: "true"
+  kmsKeyId: aws/ebs
+  fsType: ext4
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: mga-cache-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    kubernetes.io/description: "Ultra-fast storage for Redis cache clusters"
+  labels:
+    app.kubernetes.io/part-of: mga-os
+    app.kubernetes.io/component: storage
+    storage.kubernetes.io/tier: ultra
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  iopsPerGB: "16000"
+  throughputPerGB: "1000"
+  encrypted: "true"
+  kmsKeyId: aws/ebs
+  fsType: ext4
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: mga-document-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+    kubernetes.io/description: "Scalable storage for MongoDB document store"
+  labels:
+    app.kubernetes.io/part-of: mga-os
+    app.kubernetes.io/component: storage
+    storage.kubernetes.io/tier: standard
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  iopsPerGB: "3000"
+  throughputPerGB: "125"
+  encrypted: "true"
+  kmsKeyId: aws/ebs
+  fsType: xfs
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
