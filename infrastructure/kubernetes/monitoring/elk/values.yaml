@@ -1,0 +1,189 @@
+# ELK Stack Helm Values Configuration
+# Version: 7.17.3
+# Purpose: Centralized logging and monitoring setup for MGA OS platform
+
+# Global settings
+global:
+  namespace: monitoring
+  clusterName: mga-os-elk
+
+# Elasticsearch Configuration
+elasticsearch:
+  replicas: 3
+  roles: ["master", "data", "ingest"]
+  
+  resources:
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+  
+  persistence:
+    enabled: true
+    size: "100Gi"
+    storageClass: "gp2"
+  
+  security:
+    enabled: true
+    tls:
+      enabled: true
+      certificateSecret: "elasticsearch-certs"
+      verificationMode: "full"
+    authentication:
+      enabled: true
+      secretName: "elasticsearch-credentials"
+      roles: ["superuser", "monitoring_user"]
+  
+  monitoring:
+    enabled: true
+    prometheus:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        interval: "30s"
+  
+  indexLifecycle:
+    enabled: true
+    policies:
+      - name: "logs"
+        phases:
+          hot:
+            minAge: "0ms"
+            actions:
+              rollover:
+                maxAge: "7d"
+                maxSize: "50GB"
+          warm:
+            minAge: "7d"
+            actions:
+              shrink:
+                numberOfShards: 1
+          delete:
+            minAge: "30d"
+            actions:
+              delete: {}
+
+# Logstash Configuration
+logstash:
+  replicas: 2
+  
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+  
+  pipeline:
+    inputs:
+      - type: "beats"
+        port: 5044
+        ssl: true
+        ssl_certificate: "/etc/logstash/certs/logstash.crt"
+        ssl_key: "/etc/logstash/certs/logstash.key"
+      - type: "tcp"
+        port: 5000
+        codec: "json"
+        ssl_enabled: true
+        ssl_certificate: "/etc/logstash/certs/logstash.crt"
+        ssl_key: "/etc/logstash/certs/logstash.key"
+    
+    filters:
+      - type: "grok"
+        patterns: [
+          "MGA_OS_LOG_PATTERN",
+          "POLICY_SERVICE_PATTERN",
+          "UNDERWRITING_PATTERN",
+          "SECURITY_ALERT_PATTERN"
+        ]
+      - type: "date"
+        field: "timestamp"
+        target: "@timestamp"
+        formats: ["ISO8601", "UNIX", "UNIX_MS"]
+      - type: "mutate"
+        add_field:
+          environment: "%{[kubernetes][namespace]}"
+          service: "%{[kubernetes][container][name]}"
+    
+    outputs:
+      - type: "elasticsearch"
+        hosts: ["elasticsearch-master:9200"]
+        index: "mga-os-logs-%{+YYYY.MM.dd}"
+        ssl: true
+        ssl_certificate_verification: true
+        cacert: "/etc/logstash/certs/ca.crt"
+        user: "${ELASTICSEARCH_USER}"
+        password: "${ELASTICSEARCH_PASSWORD}"
+  
+  monitoring:
+    enabled: true
+    prometheus:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        interval: "30s"
+
+# Kibana Configuration
+kibana:
+  replicas: 2
+  
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+  
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    hosts: ["kibana.mga-os.internal"]
+    tls:
+      - secretName: "kibana-tls"
+        hosts: ["kibana.mga-os.internal"]
+  
+  security:
+    enabled: true
+    tls:
+      enabled: true
+      certificateSecret: "kibana-certs"
+    authentication:
+      enabled: true
+      provider: "elasticsearch"
+  
+  dashboards:
+    enabled: true
+    defaultIndex: "mga-os-logs-*"
+    preConfigured:
+      - name: "MGA OS Overview"
+        type: "dashboard"
+        priority: 1
+      - name: "Security Analytics"
+        type: "dashboard"
+        priority: 2
+      - name: "Performance Metrics"
+        type: "dashboard"
+        priority: 3
+  
+  monitoring:
+    enabled: true
+    prometheus:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        interval: "30s"
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  allowMonitoring:
+    enabled: true
+    fromNamespace: "mga-monitoring"
