@@ -1,0 +1,133 @@
+---
+# Default deny-all NetworkPolicy implementing zero trust baseline
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: mga-production
+  labels:
+    app: mga-os
+    component: security
+    type: network-policy
+  annotations:
+    kubernetes.io/description: "Default deny-all policy implementing zero trust networking baseline"
+spec:
+  podSelector: {}  # Applies to all pods in namespace
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# Allow web frontend to backend service communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-web-to-backend
+  namespace: mga-production
+  labels:
+    app: mga-os
+    component: security
+    type: network-policy
+  annotations:
+    kubernetes.io/description: "Allows web frontend pods to communicate with backend service"
+spec:
+  podSelector:
+    matchLabels:
+      app: mga-os
+      component: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: mga-web
+              component: frontend
+      ports:
+        - port: 3000
+          protocol: TCP
+        - port: 9090
+          protocol: TCP
+---
+# Allow monitoring access to service metrics
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring
+  namespace: mga-production
+  labels:
+    app: mga-os
+    component: security
+    type: network-policy
+  annotations:
+    kubernetes.io/description: "Allows monitoring tools to scrape metrics from all pods"
+spec:
+  podSelector: {}  # Applies to all pods
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: mga-monitoring
+      ports:
+        - port: 9090
+          protocol: TCP
+---
+# Allow DNS resolution
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: mga-production
+  labels:
+    app: mga-os
+    component: security
+    type: network-policy
+  annotations:
+    kubernetes.io/description: "Allows DNS resolution for all pods"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+---
+# Allow backend to external services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-external
+  namespace: mga-production
+  labels:
+    app: mga-os
+    component: security
+    type: network-policy
+  annotations:
+    kubernetes.io/description: "Allows backend pods to access external services"
+spec:
+  podSelector:
+    matchLabels:
+      app: mga-os
+      component: backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.0.0/16  # AWS metadata
+              - 172.16.0.0/12   # Private network
+              - 192.168.0.0/16  # Private network
+      ports:
+        - port: 443
+          protocol: TCP
