@@ -1,0 +1,59 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mga-web-hpa
+  namespace: mga-production
+  labels:
+    app: mga-web
+    component: frontend
+    environment: production
+    tier: web
+    managed-by: kubernetes
+    cost-center: frontend-ops
+  annotations:
+    monitoring.mga.io/scaling-review: 'daily'
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '9090'
+    scaling.mga.io/last-review: '2023-10-01'
+    scaling.mga.io/review-by: 'platform-team'
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mga-web
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+        - type: Percent
+          value: 50
+          periodSeconds: 30
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+        - type: Percent
+          value: 20
+          periodSeconds: 120
+      selectPolicy: Min
