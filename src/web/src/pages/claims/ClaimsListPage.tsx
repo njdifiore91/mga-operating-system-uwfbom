@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, memo } from 'react';
 import { Box, Button, CircularProgress, Snackbar, Alert } from '@mui/material'; // @mui/material@5.14.x
 import { Add as AddIcon } from '@mui/icons-material'; // @mui/icons-material@5.14.x
-import { useNavigate, useLocation } from 'react-router-dom'; // react-router-dom@6.14.x
+import { useNavigate } from 'react-router-dom'; // react-router-dom@6.14.x
 import { debounce } from 'lodash'; // lodash@4.17.x
 
 import ClaimsList from '../../components/claims/ClaimsList';
@@ -16,7 +16,6 @@ import { useClaims } from '../../hooks/useClaims';
 const ClaimsListPage: React.FC = memo(() => {
   // Hooks initialization
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -26,21 +25,12 @@ const ClaimsListPage: React.FC = memo(() => {
     isLoading,
     error: claimsError,
     pagination,
-    fetchClaims,
-    subscribeToUpdates
+    fetchClaims
   } = useClaims({
     autoFetch: true,
     pageSize: 25,
     enableRealTimeUpdates: true
   });
-
-  // Set up WebSocket subscription for real-time updates
-  useEffect(() => {
-    const unsubscribe = subscribeToUpdates();
-    return () => {
-      unsubscribe?.();
-    };
-  }, [subscribeToUpdates]);
 
   // Debounced search handler
   const handleSearch = useCallback(
