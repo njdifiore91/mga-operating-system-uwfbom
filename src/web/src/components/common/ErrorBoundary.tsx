@@ -1,6 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button } from '@mui/material'; // v5.14.x
-import Notification from './Notification';
 
 /**
  * Props interface for the ErrorBoundary component
@@ -66,13 +65,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString()
     });
-
-    // Display accessible error notification
-    const notification = {
-      message: 'An unexpected error occurred. Our team has been notified.',
-      severity: 'error',
-      autoHideDuration: 6000
-    };
 
     // Call optional error callback
     if (this.props.onError) {
