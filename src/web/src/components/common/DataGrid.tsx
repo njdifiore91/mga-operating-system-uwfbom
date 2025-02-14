@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { DataGrid as MuiDataGrid, GridColDef, GridFilterModel, GridSortModel } from '@mui/x-data-grid'; // @mui/x-data-grid@6.10.x
 import { Box } from '@mui/material'; // @mui/material@5.14.x
 import { PaginationParams } from '../../types/common.types';
@@ -24,13 +24,11 @@ interface DataGridProps {
   /** Callback for filter changes */
   onFilterChange?: (field: string, value: any) => void;
   /** Current filter model */
-  filterModel?: Record<string, any>;
+  filterModel?: GridFilterModel;
   /** Disable sorting functionality */
   disableSortBy?: boolean;
   /** Disable filtering functionality */
   disableFilters?: boolean;
-  /** Default page size */
-  defaultPageSize?: number;
   /** ARIA label for accessibility */
   ariaLabel?: string;
 }
@@ -48,10 +46,9 @@ const DataGrid: React.FC<DataGridProps> = ({
   paginationParams,
   onPaginationChange,
   onFilterChange,
-  filterModel = {},
+  filterModel = { items: [] },
   disableSortBy = false,
   disableFilters = false,
-  defaultPageSize = 25,
   ariaLabel = 'Data grid'
 }) => {
   // Memoize the processed columns to prevent unnecessary re-renders
@@ -60,7 +57,7 @@ const DataGrid: React.FC<DataGridProps> = ({
       ...column,
       // Add default formatting for currency fields
       valueFormatter: column.type === 'currency' 
-        ? ({ value }) => formatCurrency(value)
+        ? ({ value }: { value: number }) => formatCurrency(value)
         : column.valueFormatter,
       // Ensure consistent header styling
       headerClassName: 'data-grid-header',
@@ -145,8 +142,8 @@ const DataGrid: React.FC<DataGridProps> = ({
         page={paginationParams.page}
         pageSize={paginationParams.limit}
         rowsPerPageOptions={[10, 25, 50, 100]}
-        onPageChange={(page) => handlePageChange(page, paginationParams.limit)}
-        onPageSizeChange={(pageSize) => handlePageChange(paginationParams.page, pageSize)}
+        onPageChange={(page: number) => handlePageChange(page, paginationParams.limit)}
+        onPageSizeChange={(pageSize: number) => handlePageChange(paginationParams.page, pageSize)}
         sortingMode="server"
         onSortModelChange={handleSortModelChange}
         filterMode="server"
@@ -159,7 +156,6 @@ const DataGrid: React.FC<DataGridProps> = ({
         }}
         componentsProps={{
           loadingOverlay: {
-            size: 40,
             color: 'primary.main'
           }
         }}
