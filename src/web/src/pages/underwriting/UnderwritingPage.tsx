@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Box, Paper, Skeleton, Alert } from '@mui/material';
 import { useApm } from '@elastic/apm-rum-react';
 import useWebSocket from 'react-use-websocket';
-import { useAnalytics } from '@segment/analytics-next';
+import { Analytics } from '@segment/analytics-next';
 
 import UnderwritingDashboard from '../../components/underwriting/UnderwritingDashboard';
 import UnderwritingWorkflow from '../../components/underwriting/UnderwritingWorkflow';
@@ -30,14 +30,10 @@ const UnderwritingPage: React.FC = React.memo(() => {
 
   // Custom hooks
   const { apm } = useApm();
-  const { track } = useAnalytics();
+  const analytics = Analytics.getInstance();
   const {
-    riskAssessment,
-    queue,
-    submitForUnderwriting,
     makeDecision,
-    updateFilters,
-    pagination
+    updateFilters
   } = useUnderwriting({
     status: null,
     severity: null,
@@ -91,7 +87,7 @@ const UnderwritingPage: React.FC = React.memo(() => {
       await makeDecision(decision);
       
       // Track completion event
-      track('underwriting_workflow_completed', {
+      analytics.track('underwriting_workflow_completed', {
         policyId: decision.policyId,
         decision: decision.decision,
         timestamp: new Date().toISOString()
@@ -102,7 +98,7 @@ const UnderwritingPage: React.FC = React.memo(() => {
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Workflow completion failed'));
     }
-  }, [makeDecision, navigate, track]);
+  }, [makeDecision, navigate, analytics]);
 
   // Handle errors
   const handleError = useCallback((error: Error) => {
@@ -131,7 +127,6 @@ const UnderwritingPage: React.FC = React.memo(() => {
 
   return (
     <ErrorBoundary
-      onError={handleError}
       fallback={
         <Alert 
           severity="error"
