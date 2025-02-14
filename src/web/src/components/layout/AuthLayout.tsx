@@ -117,7 +117,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children, className }) => {
           {/* Dynamic content rendering based on auth state */}
           {authState.status === 'mfa_required' ? (
             <MFAVerification
-              sessionToken={authState.sessionToken || ''}
+              sessionToken={authState.user?.id || ''}
               onSuccess={() => navigate('/dashboard')}
               onError={(error) => console.error('MFA Error:', error)}
             />
