@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Grid,
   Paper,
@@ -9,16 +9,13 @@ import {
   useMediaQuery
 } from '@mui/material';
 import { DateRangePicker } from '@mui/x-date-pickers-pro';
-import { useWebSocket } from 'react-use-websocket';
+import useWebSocket from 'react-use-websocket';
 import MetricsCard from './MetricsCard';
 import PerformanceChart from './PerformanceChart';
 import {
   PolicyMetrics,
   UnderwritingMetrics,
   ComplianceMetrics,
-  DashboardMetrics,
-  MetricTrend,
-  ChartType
 } from '../../types/analytics.types';
 import { DateRange } from '../../types/common.types';
 
@@ -32,6 +29,8 @@ interface AnalyticsDashboardProps {
   onError?: (error: Error) => void;
 }
 
+type CombinedMetrics = PolicyMetrics & UnderwritingMetrics & ComplianceMetrics;
+
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   className,
   style,
@@ -41,10 +40,9 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   // Theme and responsive breakpoints
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   // State management
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [metrics, setMetrics] = useState<CombinedMetrics | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -53,7 +51,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   });
 
   // WebSocket connection for real-time updates
-  const { lastMessage, readyState } = useWebSocket(WS_ENDPOINT, {
+  const { lastMessage } = useWebSocket(WS_ENDPOINT, {
     shouldReconnect: () => true,
     reconnectAttempts: 5,
     reconnectInterval: 3000,
@@ -174,18 +172,18 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         <Grid item xs={gridLayout.xs} sm={gridLayout.sm} md={gridLayout.md} lg={gridLayout.lg}>
           <MetricsCard
             title="Total Policies"
-            value={metrics?.policyMetrics.totalPolicies || 0}
+            value={metrics?.totalPolicies || 0}
             format="number"
-            trend={{ trend: 'up', change: 5.2 }}
+            trend={{ trend: 'up', change: 5.2, value: 5.2 }}
             loading={loading}
           />
         </Grid>
         <Grid item xs={gridLayout.xs} sm={gridLayout.sm} md={gridLayout.md} lg={gridLayout.lg}>
           <MetricsCard
             title="Total Premium"
-            value={metrics?.policyMetrics.totalPremium || 0}
+            value={metrics?.totalPremium || 0}
             format="currency"
-            trend={{ trend: 'up', change: 12.8 }}
+            trend={{ trend: 'up', change: 12.8, value: 12.8 }}
             loading={loading}
           />
         </Grid>
@@ -194,18 +192,18 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         <Grid item xs={gridLayout.xs} sm={gridLayout.sm} md={gridLayout.md} lg={gridLayout.lg}>
           <MetricsCard
             title="Automation Rate"
-            value={metrics?.underwritingMetrics.automationRate || 0}
+            value={metrics?.automationRate || 0}
             format="percentage"
-            trend={{ trend: 'up', change: 8.5 }}
+            trend={{ trend: 'up', change: 8.5, value: 8.5 }}
             loading={loading}
           />
         </Grid>
         <Grid item xs={gridLayout.xs} sm={gridLayout.sm} md={gridLayout.md} lg={gridLayout.lg}>
           <MetricsCard
             title="Pending Reviews"
-            value={metrics?.underwritingMetrics.pendingReviews || 0}
+            value={metrics?.pendingReviews || 0}
             format="number"
-            trend={{ trend: 'down', change: -15.3 }}
+            trend={{ trend: 'down', change: -15.3, value: -15.3 }}
             loading={loading}
           />
         </Grid>
