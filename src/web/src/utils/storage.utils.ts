@@ -212,7 +212,7 @@ export namespace StorageUtils {
   export function initializeStorageMonitoring(): void {
     // Monitor storage changes across tabs
     window.addEventListener('storage', (event) => {
-      if (event.key && Object.values(STORAGE_KEYS).includes(event.key)) {
+      if (event.key && Object.values(STORAGE_KEYS).includes(event.key as keyof typeof STORAGE_KEYS)) {
         window.dispatchEvent(
           new CustomEvent(STORAGE_EVENTS.STORAGE_CHANGED, {
             detail: { key: event.key }
