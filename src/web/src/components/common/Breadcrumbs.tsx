@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Breadcrumbs as MuiBreadcrumbs, Link, Typography } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { POLICY_ROUTES, CLAIMS_ROUTES } from 'constants/routes.constants';
+import { POLICY_ROUTES, CLAIMS_ROUTES } from '../../constants/routes.constants';
 
 /**
  * Interface for breadcrumb items with enhanced type safety
