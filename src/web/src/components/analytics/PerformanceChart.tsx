@@ -10,12 +10,8 @@ import {
   LineChart, BarChart, AreaChart, XAxis, YAxis, 
   Tooltip, Legend, ResponsiveContainer, CartesianGrid, Brush
 } from 'recharts'; // ^2.7.2
-import { format, subDays, isValid } from 'date-fns'; // ^2.30.0
+import { format } from 'date-fns'; // ^2.30.0
 import {
-  PolicyMetrics,
-  UnderwritingMetrics,
-  ComplianceMetrics,
-  MetricTrend,
   ChartType
 } from '../../types/analytics.types';
 import {
@@ -90,7 +86,7 @@ export const PerformanceChart: React.FC<ChartProps> = ({
   // Format data for chart rendering
   const formatChartData = useCallback((rawData: any) => {
     try {
-      return Object.entries(rawData).map(([timestamp, metrics]) => ({
+      return Object.entries(rawData).map(([timestamp, metrics]: [string, any]) => ({
         timestamp: format(new Date(timestamp), 'yyyy-MM-dd HH:mm'),
         ...metrics,
       }));
@@ -105,12 +101,12 @@ export const PerformanceChart: React.FC<ChartProps> = ({
     if (enableRealTime) {
       const ws = initializeWebSocket(`metrics/${metricCategory}`);
       
-      ws.onmessage = (event) => {
+      ws.onmessage = (event: MessageEvent) => {
         const newMetric = JSON.parse(event.data);
         setData(prevData => [...prevData.slice(-99), formatChartData([newMetric])[0]]);
       };
 
-      ws.onerror = (error) => {
+      ws.onerror = (error: Event) => {
         console.error('WebSocket error:', error);
         setError(new Error('Real-time updates failed'));
       };
@@ -192,18 +188,21 @@ export const PerformanceChart: React.FC<ChartProps> = ({
           )}
           {Object.keys(data[0] || {})
             .filter(key => key !== 'timestamp')
-            .map((key, index) => (
-              <ChartComponent.type
-                key={key}
-                type="monotone"
-                dataKey={key}
-                stroke={config.colors?.[index % (config.colors?.length || 1)]}
-                fill={config.colors?.[index % (config.colors?.length || 1)]}
-                animationDuration={config.animation ? 300 : 0}
-                role="presentation"
-                aria-label={`${key} data series`}
-              />
-            ))}
+            .map((key, index) => {
+              const ChartElement = chartType === 'area' ? AreaChart : chartType === 'bar' ? BarChart : LineChart;
+              return (
+                <ChartElement
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={config.colors?.[index % (config.colors?.length || 1)]}
+                  fill={config.colors?.[index % (config.colors?.length || 1)]}
+                  animationDuration={config.animation ? 300 : 0}
+                  role="presentation"
+                  aria-label={`${key} data series`}
+                />
+              );
+            })}
         </ChartComponent>
       </ResponsiveContainer>
     );
