@@ -4,6 +4,16 @@ import { Theme, ThemeOptions, createTheme } from '@mui/material';
 const SPACING_UNIT = 8;
 const TRANSITION_DURATION = 200;
 
+declare module '@mui/material/styles' {
+  interface PaletteColor {
+    hover?: string;
+    active?: string;
+  }
+  interface TypeBackground {
+    elevated?: string;
+  }
+}
+
 /**
  * @interface ThemeConfig
  * @description Comprehensive theme configuration interface with strict typing
