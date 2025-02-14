@@ -6,7 +6,7 @@
 
 import '@testing-library/jest-dom'; // ^5.16.5
 import { userEvent } from '@testing-library/user-event'; // ^14.4.3
-import server from './mocks/server';
+import { server } from './mocks/server';
 
 /**
  * Configure global test environment before all tests
