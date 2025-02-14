@@ -9,10 +9,9 @@ import { createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../reducers';
 import type {
   IRiskAssessmentDisplay,
-  IUnderwritingQueueItem,
   UnderwritingStatus,
-  RiskSeverity
 } from '../../types/underwriting.types';
+import { RiskSeverity } from '../../types/underwriting.types';
 
 /**
  * Base selector for accessing the underwriting slice of state
@@ -38,7 +37,7 @@ export const selectUnderwritingQueue = createSelector(
     // Apply filters if present
     let filteredItems = queueItems;
     if (filters) {
-      filteredItems = queueItems.filter(item => {
+      filteredItems = queueItems.filter((item: { status: string; severity: string; riskScore: number }) => {
         if (filters.status && item.status !== filters.status) return false;
         if (filters.severity && item.severity !== filters.severity) return false;
         if (filters.minScore && item.riskScore < filters.minScore) return false;
@@ -125,7 +124,7 @@ export const selectSelectedAssessment = createSelector(
     // Ensure all required fields are present
     return {
       ...riskAssessment,
-      factors: riskAssessment.factors.map(factor => ({
+      factors: riskAssessment.factors.map((factor: { severity: any; score: number }) => ({
         ...factor,
         severity: factor.severity || calculateFactorSeverity(factor.score)
       }))
