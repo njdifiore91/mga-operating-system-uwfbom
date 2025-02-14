@@ -10,8 +10,7 @@ import {
   MFAVerification,
   AuthResponse,
   AuthTokens,
-  AuthError,
-  SecurityEvent
+  AuthError
 } from '../../types/auth.types';
 import { authService } from '../../services/auth.service';
 
@@ -35,22 +34,8 @@ export const loginUser = createAsyncThunk<
     try {
       // Attempt user authentication with enhanced security
       const response = await authService.authenticateUser(credentials);
-
-      // Log successful authentication attempt
-      authService.logSecurityEvent({
-        type: 'AUTH_SUCCESS',
-        userId: response.user?.id,
-        requiresMFA: response.requiresMFA
-      });
-
       return response;
     } catch (error) {
-      // Log failed authentication attempt
-      authService.logSecurityEvent({
-        type: 'AUTH_FAILURE',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-
       if (error instanceof Error) {
         return rejectWithValue({
           code: 'AUTH_ERROR',
@@ -74,24 +59,9 @@ export const verifyMFACode = createAsyncThunk<
   async (verification: MFAVerification, { rejectWithValue }) => {
     try {
       // Complete MFA verification with enhanced security context
-      const response = await authService.completeMFAVerification(verification);
-
-      // Log successful MFA verification
-      authService.logSecurityEvent({
-        type: 'MFA_SUCCESS',
-        userId: response.user.id,
-        method: verification.method
-      });
-
+      const response = await authService.verifyMFA(verification);
       return response;
     } catch (error) {
-      // Log failed MFA verification
-      authService.logSecurityEvent({
-        type: 'MFA_FAILURE',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        method: verification.method
-      });
-
       if (error instanceof Error) {
         return rejectWithValue({
           code: 'MFA_ERROR',
@@ -108,29 +78,19 @@ export const verifyMFACode = createAsyncThunk<
  */
 export const refreshUserSession = createAsyncThunk<
   AuthTokens,
-  string,
+  void,
   { rejectValue: AuthError }
 >(
   AUTH_ACTION_TYPES.REFRESH_SESSION,
-  async (refreshToken: string, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      // Attempt token refresh with security validation
-      const tokens = await authService.handleTokenRefresh(refreshToken);
-
-      // Log successful token refresh
-      authService.logSecurityEvent({
-        type: 'TOKEN_REFRESH_SUCCESS',
-        tokenType: tokens.tokenType
-      });
-
+      await authService.handleTokenRefresh();
+      const tokens = authService.getCurrentTokens();
+      if (!tokens) {
+        throw new Error('Token refresh failed');
+      }
       return tokens;
     } catch (error) {
-      // Log failed token refresh
-      authService.logSecurityEvent({
-        type: 'TOKEN_REFRESH_FAILURE',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-
       if (error instanceof Error) {
         return rejectWithValue({
           code: 'REFRESH_ERROR',
