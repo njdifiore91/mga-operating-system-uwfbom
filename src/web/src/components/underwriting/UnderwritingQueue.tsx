@@ -7,13 +7,12 @@ import {
   Tooltip,
   CircularProgress,
   Alert
-} from '@mui/material'; // @mui/material@5.14.x
+} from '@mui/material';
 import DataGrid from '../common/DataGrid';
 import { useUnderwriting } from '../../hooks/useUnderwriting';
 import {
   IUnderwritingQueueItem,
-  UnderwritingStatus,
-  RiskSeverity
+  UnderwritingStatus
 } from '../../types/underwriting.types';
 import { RISK_SEVERITY, UNDERWRITING_QUEUE_COLUMNS } from '../../constants/underwriting.constants';
 
@@ -23,10 +22,6 @@ interface UnderwritingQueueProps {
   refreshInterval?: number;
   batchSize?: number;
   errorRetryCount?: number;
-  virtualScrollConfig?: {
-    rowHeight: number;
-    overscanCount: number;
-  };
 }
 
 const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
@@ -34,23 +29,19 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
   filters = {},
   refreshInterval = 30000,
   batchSize = 25,
-  errorRetryCount = 3,
-  virtualScrollConfig = { rowHeight: 52, overscanCount: 5 }
+  errorRetryCount = 3
 }) => {
   // State management with useUnderwriting hook
   const {
     queue,
     isLoading,
     isError,
-    error,
     updateFilters,
-    makeDecision,
     pagination,
     realTimeUpdates
   } = useUnderwriting(filters);
 
-  // Local state for selected policies and error handling
-  const [selectedPolicies, setSelectedPolicies] = useState<string[]>([]);
+  // Local state for error handling
   const [retryCount, setRetryCount] = useState(0);
 
   // Set up real-time updates
@@ -80,6 +71,8 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
   const columns = useMemo(() => [
     {
       ...UNDERWRITING_QUEUE_COLUMNS.POLICY_ID,
+      field: 'policyId',
+      type: 'string',
       renderCell: (params: { row: IUnderwritingQueueItem }) => (
         <Button
           variant="text"
@@ -92,6 +85,8 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
     },
     {
       ...UNDERWRITING_QUEUE_COLUMNS.STATUS,
+      field: 'status',
+      type: 'string',
       renderCell: (params: { row: IUnderwritingQueueItem }) => (
         <Chip
           label={params.row.status}
@@ -102,6 +97,8 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
     },
     {
       ...UNDERWRITING_QUEUE_COLUMNS.RISK_SCORE,
+      field: 'riskScore',
+      type: 'number',
       renderCell: (params: { row: IUnderwritingQueueItem }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <CircularProgress
@@ -123,6 +120,8 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
     },
     {
       ...UNDERWRITING_QUEUE_COLUMNS.SEVERITY,
+      field: 'severity',
+      type: 'string',
       renderCell: (params: { row: IUnderwritingQueueItem }) => (
         <Tooltip title={RISK_SEVERITY[params.row.severity].label}>
           <Chip
@@ -136,25 +135,27 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
         </Tooltip>
       )
     },
-    UNDERWRITING_QUEUE_COLUMNS.POLICY_TYPE,
-    UNDERWRITING_QUEUE_COLUMNS.SUBMISSION_DATE,
-    UNDERWRITING_QUEUE_COLUMNS.ASSIGNED_TO,
+    {
+      ...UNDERWRITING_QUEUE_COLUMNS.POLICY_TYPE,
+      field: 'policyType',
+      type: 'string'
+    },
+    {
+      ...UNDERWRITING_QUEUE_COLUMNS.SUBMISSION_DATE,
+      field: 'submissionDate',
+      type: 'date'
+    },
+    {
+      ...UNDERWRITING_QUEUE_COLUMNS.ASSIGNED_TO,
+      field: 'assignedTo',
+      type: 'string'
+    }
   ], [onPolicySelect]);
 
   // Handle filter changes
   const handleFilterChange = useCallback((field: string, value: any) => {
     updateFilters({ ...filters, [field]: value });
   }, [filters, updateFilters]);
-
-  // Handle decision actions
-  const handleDecision = useCallback(async (policyId: string, decision: UnderwritingStatus) => {
-    try {
-      await makeDecision({ policyId, decision, notes: '', conditions: [] });
-      setSelectedPolicies([]);
-    } catch (err) {
-      console.error('Decision processing failed:', err);
-    }
-  }, [makeDecision]);
 
   if (isError && retryCount >= errorRetryCount) {
     return (
@@ -171,7 +172,12 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
         columns={columns}
         loading={isLoading}
         totalRows={queue?.totalCount || 0}
-        paginationParams={pagination}
+        paginationParams={{
+          page: pagination.cursor?.page || 0,
+          limit: batchSize,
+          sortBy: '',
+          sortOrder: 'asc'
+        }}
         onPaginationChange={pagination.handlePagination}
         onFilterChange={handleFilterChange}
         filterModel={filters}
