@@ -8,8 +8,6 @@ import { createReducer } from '@reduxjs/toolkit';
 import {
   IRiskAssessmentDisplay,
   IUnderwritingQueueItem,
-  UnderwritingStatus,
-  RiskSeverity
 } from '../../types/underwriting.types';
 import {
   fetchRiskAssessment,
@@ -17,11 +15,6 @@ import {
   processUnderwritingDecision,
   updateUnderwritingQueue
 } from '../actions/underwriting.actions';
-import {
-  UNDERWRITING_STATUS,
-  RISK_SEVERITY,
-  RISK_SCORE_RANGES
-} from '../../constants/underwriting.constants';
 
 // Interface for cache entries with metadata
 interface ICacheEntry<T> {
