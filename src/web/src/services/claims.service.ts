@@ -29,16 +29,6 @@ import {
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const cache = new Map<string, { data: any; timestamp: number }>();
 
-// Retry configuration for API calls
-retry(claimsApi, {
-  retries: 3,
-  retryDelay: (retryCount) => retryCount * 1000,
-  retryCondition: (error) => {
-    return retry.isNetworkOrIdempotentRequestError(error) ||
-           error.response?.status === 429;
-  }
-});
-
 /**
  * Claims service providing enhanced business logic and data management
  */
@@ -76,26 +66,16 @@ class ClaimsService {
   }
 
   /**
-   * Submits a new claim with validation and OneShield synchronization
+   * Submits a new claim with validation
    */
   async submitClaim(claimData: CreateClaimRequest): Promise<Claim> {
     this.validateClaimData(claimData);
     
-    const processedData = {
+    const claim = await claimsApi.createClaim({
       ...claimData,
-      incidentDate: this.formatDate(claimData.incidentDate),
       initialReserve: this.formatCurrency(claimData.initialReserve)
-    };
-
-    const claim = await claimsApi.createClaim(processedData);
+    });
     
-    try {
-      await claimsApi.syncWithOneShield(claim.id);
-    } catch (error) {
-      console.error('OneShield sync failed:', error);
-      // Continue with claim creation even if sync fails
-    }
-
     this.invalidateCache();
     return this.processClaim(claim);
   }
@@ -187,8 +167,8 @@ class ClaimsService {
   }
 
   private validateStatusTransition(
-    currentStatus: keyof typeof CLAIM_STATUS,
-    newStatus: keyof typeof CLAIM_STATUS
+    currentStatus: CLAIM_STATUS,
+    newStatus: CLAIM_STATUS
   ): void {
     const allowedTransitions = CLAIM_STATUS_TRANSITIONS[currentStatus];
     if (!allowedTransitions.includes(newStatus)) {
@@ -207,10 +187,6 @@ class ClaimsService {
     if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
       throw new Error('File type not supported');
     }
-  }
-
-  private formatDate(date: Date): string {
-    return format(date, 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx');
   }
 
   private formatCurrency(amount: number): number {
