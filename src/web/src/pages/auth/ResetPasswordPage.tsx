@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { AuthLayout } from '../../components/layout/AuthLayout';
-import { PasswordReset } from '../../components/auth/PasswordReset';
+import AuthLayout from '../../components/layout/AuthLayout';
+import PasswordReset from '../../components/auth/PasswordReset';
 
 /**
  * Enhanced password reset page component implementing OAuth 2.0 standards
