@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { createReducer } from '@reduxjs/toolkit'; // ^1.9.5
+import { createReducer, PayloadAction } from '@reduxjs/toolkit'; // ^1.9.5
 import { IPolicy, PolicyStatus } from '../../types/policy.types';
 import { PolicyActionTypes } from '../actions/policy.actions';
 
@@ -63,14 +63,14 @@ export const policyReducer = createReducer(initialState, (builder) => {
       state.loading = true;
       state.error = null;
     })
-    .addCase(PolicyActionTypes.FETCH_POLICIES_SUCCESS, (state, action) => {
+    .addCase(PolicyActionTypes.FETCH_POLICIES_SUCCESS, (state, action: PayloadAction<{ policies: IPolicy[]; total: number }>) => {
       state.loading = false;
       state.policies = action.payload.policies;
       state.total = action.payload.total;
       state.lastUpdated = Date.now();
       state.error = null;
     })
-    .addCase(PolicyActionTypes.FETCH_POLICIES_FAILURE, (state, action) => {
+    .addCase(PolicyActionTypes.FETCH_POLICIES_FAILURE, (state, action: PayloadAction<{ message: string }>) => {
       state.loading = false;
       state.error = action.payload.message;
     })
@@ -80,7 +80,7 @@ export const policyReducer = createReducer(initialState, (builder) => {
       state.loading = true;
       state.error = null;
     })
-    .addCase(PolicyActionTypes.FETCH_POLICY_DETAILS_SUCCESS, (state, action) => {
+    .addCase(PolicyActionTypes.FETCH_POLICY_DETAILS_SUCCESS, (state, action: PayloadAction<IPolicy>) => {
       state.loading = false;
       state.selectedPolicy = action.payload;
       state.error = null;
@@ -91,7 +91,7 @@ export const policyReducer = createReducer(initialState, (builder) => {
         state.policies[index] = action.payload;
       }
     })
-    .addCase(PolicyActionTypes.FETCH_POLICY_DETAILS_FAILURE, (state, action) => {
+    .addCase(PolicyActionTypes.FETCH_POLICY_DETAILS_FAILURE, (state, action: PayloadAction<{ message: string }>) => {
       state.loading = false;
       state.error = action.payload.message;
     })
@@ -101,14 +101,14 @@ export const policyReducer = createReducer(initialState, (builder) => {
       state.loading = true;
       state.error = null;
     })
-    .addCase(PolicyActionTypes.CREATE_POLICY_SUCCESS, (state, action) => {
+    .addCase(PolicyActionTypes.CREATE_POLICY_SUCCESS, (state, action: PayloadAction<IPolicy>) => {
       state.loading = false;
       state.policies.unshift(action.payload);
       state.total += 1;
       state.lastUpdated = Date.now();
       state.error = null;
     })
-    .addCase(PolicyActionTypes.CREATE_POLICY_FAILURE, (state, action) => {
+    .addCase(PolicyActionTypes.CREATE_POLICY_FAILURE, (state, action: PayloadAction<{ message: string }>) => {
       state.loading = false;
       state.error = action.payload.message;
     })
@@ -118,7 +118,7 @@ export const policyReducer = createReducer(initialState, (builder) => {
       state.loading = true;
       state.error = null;
     })
-    .addCase(PolicyActionTypes.UPDATE_POLICY_SUCCESS, (state, action) => {
+    .addCase(PolicyActionTypes.UPDATE_POLICY_SUCCESS, (state, action: PayloadAction<IPolicy>) => {
       state.loading = false;
       
       // Update in policies list
@@ -135,18 +135,18 @@ export const policyReducer = createReducer(initialState, (builder) => {
       state.lastUpdated = Date.now();
       state.error = null;
     })
-    .addCase(PolicyActionTypes.UPDATE_POLICY_FAILURE, (state, action) => {
+    .addCase(PolicyActionTypes.UPDATE_POLICY_FAILURE, (state, action: PayloadAction<{ message: string }>) => {
       state.loading = false;
       state.error = action.payload.message;
     })
 
     // Handle policy binding
-    .addCase(PolicyActionTypes.BIND_POLICY_REQUEST, (state, action) => {
+    .addCase(PolicyActionTypes.BIND_POLICY_REQUEST, (state, action: PayloadAction<string>) => {
       state.loading = true;
       state.error = null;
       
       // Optimistic update
-      const policyId = action.meta.arg;
+      const policyId = action.payload;
       const index = state.policies.findIndex(p => p.id === policyId);
       if (index !== -1) {
         state.policies[index] = {
@@ -155,7 +155,7 @@ export const policyReducer = createReducer(initialState, (builder) => {
         };
       }
     })
-    .addCase(PolicyActionTypes.BIND_POLICY_SUCCESS, (state, action) => {
+    .addCase(PolicyActionTypes.BIND_POLICY_SUCCESS, (state, action: PayloadAction<IPolicy>) => {
       state.loading = false;
       
       // Update with confirmed data
@@ -171,12 +171,12 @@ export const policyReducer = createReducer(initialState, (builder) => {
       state.lastUpdated = Date.now();
       state.error = null;
     })
-    .addCase(PolicyActionTypes.BIND_POLICY_FAILURE, (state, action) => {
+    .addCase(PolicyActionTypes.BIND_POLICY_FAILURE, (state, action: PayloadAction<{ message: string; policyId: string }>) => {
       state.loading = false;
       state.error = action.payload.message;
       
       // Revert optimistic update on failure
-      const policyId = action.meta.arg;
+      const policyId = action.payload.policyId;
       const index = state.policies.findIndex(p => p.id === policyId);
       if (index !== -1) {
         state.policies[index] = {
