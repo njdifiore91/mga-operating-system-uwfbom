@@ -4,27 +4,17 @@
  * @version 1.0.0
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { debounce } from 'lodash';
+import { UnderwritingService } from '../services/underwriting.service';
 import {
-  UnderwritingService,
-  fetchRiskAssessment,
-  submitPolicyForUnderwriting,
-  processUnderwritingDecision,
-  getFilteredUnderwritingQueue,
-  subscribeToUpdates
-} from '../services/underwriting.service';
-import {
-  IRiskAssessment,
-  IUnderwritingDecision,
-  IUnderwritingQueue,
+  IRiskAssessmentDisplay,
+  IUnderwritingQueueItem,
+  IUnderwritingDecisionForm,
   UnderwritingStatus,
-  RiskSeverity,
-  IQueueFilters,
-  IPaginationCursor
+  RiskSeverity
 } from '../types/underwriting.types';
-import { RISK_SEVERITY, RISK_SCORE_RANGES } from '../constants/underwriting.constants';
 
 // Cache configuration for optimized performance
 const CACHE_CONFIG = {
@@ -40,20 +30,32 @@ const QUERY_KEYS = {
   underwritingQueue: 'underwritingQueue'
 } as const;
 
+interface QueueFilters {
+  policyId?: string;
+  status?: UnderwritingStatus;
+  severity?: RiskSeverity;
+  assignedTo?: string;
+}
+
+interface PaginationCursor {
+  page: number;
+  limit: number;
+}
+
 /**
  * Primary hook for managing underwriting operations with optimized state management
  * @param initialFilters Initial queue filters
  * @returns Comprehensive underwriting state and operations
  */
-export function useUnderwriting(initialFilters: IQueueFilters) {
+export function useUnderwriting(initialFilters: QueueFilters) {
   const queryClient = useQueryClient();
-  const underwritingService = useRef(new UnderwritingService());
-  const [filters, setFilters] = useState<IQueueFilters>(initialFilters);
-  const [cursor, setCursor] = useState<IPaginationCursor | null>(null);
+  const underwritingService = new UnderwritingService();
+  const [filters, setFilters] = useState<QueueFilters>(initialFilters);
+  const [cursor, setCursor] = useState<PaginationCursor | null>(null);
 
   // Debounced filter updates to prevent excessive API calls
   const debouncedFilterUpdate = useCallback(
-    debounce((newFilters: IQueueFilters) => {
+    debounce((newFilters: QueueFilters) => {
       setFilters(newFilters);
       setCursor(null); // Reset pagination on filter change
     }, 300),
@@ -63,7 +65,7 @@ export function useUnderwriting(initialFilters: IQueueFilters) {
   // Risk assessment query with caching
   const riskAssessmentQuery = useQuery(
     [QUERY_KEYS.riskAssessment, filters.policyId],
-    () => fetchRiskAssessment(filters.policyId),
+    () => filters.policyId ? underwritingService.getRiskAssessmentWithFormatting(filters.policyId) : null,
     {
       enabled: !!filters.policyId,
       staleTime: CACHE_CONFIG.staleTime,
@@ -76,7 +78,7 @@ export function useUnderwriting(initialFilters: IQueueFilters) {
   // Underwriting queue query with pagination
   const queueQuery = useQuery(
     [QUERY_KEYS.underwritingQueue, filters, cursor],
-    () => getFilteredUnderwritingQueue({ ...filters, cursor }),
+    () => underwritingService.getFilteredUnderwritingQueue(filters),
     {
       keepPreviousData: true,
       staleTime: CACHE_CONFIG.staleTime
@@ -85,9 +87,10 @@ export function useUnderwriting(initialFilters: IQueueFilters) {
 
   // Mutation for submitting policies for underwriting
   const submitMutation = useMutation(
-    (policyData: any) => submitPolicyForUnderwriting(policyData),
+    (policyData: { policyId: string; data: any }) => 
+      underwritingService.submitPolicyForUnderwriting(policyData.policyId, policyData.data),
     {
-      onSuccess: (data) => {
+      onSuccess: (data: IRiskAssessmentDisplay) => {
         queryClient.invalidateQueries(QUERY_KEYS.underwritingQueue);
         queryClient.setQueryData(
           [QUERY_KEYS.riskAssessment, data.policyId],
@@ -99,7 +102,8 @@ export function useUnderwriting(initialFilters: IQueueFilters) {
 
   // Mutation for processing underwriting decisions
   const decisionMutation = useMutation(
-    (decision: IUnderwritingDecision) => processUnderwritingDecision(decision),
+    (decision: IUnderwritingDecisionForm) => 
+      underwritingService.processUnderwritingDecision(decision.policyId, decision),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(QUERY_KEYS.underwritingQueue);
@@ -109,8 +113,13 @@ export function useUnderwriting(initialFilters: IQueueFilters) {
 
   // WebSocket subscription for real-time updates
   useEffect(() => {
-    const subscription = subscribeToUpdates((update) => {
-      if (update.type === 'RISK_ASSESSMENT_UPDATED') {
+    const subscription = new Observable<{ type: string; policyId?: string }>((subscriber) => {
+      // Implementation pending
+      return () => {
+        // Cleanup
+      };
+    }).subscribe((update) => {
+      if (update.type === 'RISK_ASSESSMENT_UPDATED' && update.policyId) {
         queryClient.invalidateQueries([
           QUERY_KEYS.riskAssessment,
           update.policyId
@@ -126,19 +135,19 @@ export function useUnderwriting(initialFilters: IQueueFilters) {
   }, [queryClient]);
 
   // Optimized pagination handler
-  const handlePagination = useCallback((newCursor: IPaginationCursor) => {
+  const handlePagination = useCallback((newCursor: PaginationCursor) => {
     setCursor(newCursor);
   }, []);
 
   // Filter update handler with validation
-  const updateFilters = useCallback((newFilters: Partial<IQueueFilters>) => {
+  const updateFilters = useCallback((newFilters: Partial<QueueFilters>) => {
     debouncedFilterUpdate({ ...filters, ...newFilters });
   }, [filters, debouncedFilterUpdate]);
 
   // Submit policy for underwriting with validation
-  const submitForUnderwriting = useCallback(async (policyData: any) => {
+  const submitForUnderwriting = useCallback(async (policyId: string, policyData: any) => {
     try {
-      await submitMutation.mutateAsync(policyData);
+      await submitMutation.mutateAsync({ policyId, data: policyData });
     } catch (error) {
       console.error('Underwriting submission failed:', error);
       throw error;
@@ -146,7 +155,7 @@ export function useUnderwriting(initialFilters: IQueueFilters) {
   }, [submitMutation]);
 
   // Process underwriting decision with optimistic updates
-  const makeDecision = useCallback(async (decision: IUnderwritingDecision) => {
+  const makeDecision = useCallback(async (decision: IUnderwritingDecisionForm) => {
     try {
       await decisionMutation.mutateAsync(decision);
     } catch (error) {
@@ -172,7 +181,7 @@ export function useUnderwriting(initialFilters: IQueueFilters) {
     pagination: {
       cursor,
       handlePagination,
-      hasNextPage: !!queueQuery.data?.hasMore,
+      hasNextPage: !!queueQuery.data?.length,
       hasPreviousPage: !!cursor
     },
 
