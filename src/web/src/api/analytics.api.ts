@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { AxiosResponse, AxiosError } from 'axios'; // ^1.4.0
+import { AxiosError } from 'axios'; // ^1.4.0
 import { apiClient } from '../config/api.config';
 import { API_ENDPOINTS } from '../constants/api.constants';
 import {
@@ -14,24 +14,9 @@ import {
   ComplianceMetrics,
   PerformanceReport,
   ReportOptions,
-  DateRange,
-  MetricDataPoint,
   TimeSeriesData
 } from '../types/analytics.types';
-
-// Cache TTL configurations (in milliseconds)
-const CACHE_TTL = {
-  DASHBOARD_METRICS: 5 * 60 * 1000, // 5 minutes
-  PERFORMANCE_REPORT: 15 * 60 * 1000, // 15 minutes
-  METRICS_DATA: 10 * 60 * 1000 // 10 minutes
-} as const;
-
-// Retry configurations
-const RETRY_CONFIG = {
-  maxRetries: 3,
-  initialDelayMs: 1000,
-  maxDelayMs: 5000
-} as const;
+import { DateRange } from '../types/common.types';
 
 /**
  * Retrieves real-time dashboard metrics with caching and monitoring
