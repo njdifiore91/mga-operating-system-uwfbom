@@ -16,15 +16,15 @@ import uiReducer from './ui.reducer';
 // Import state types
 import type { AuthState } from '../../types/auth.types';
 import type { PolicyState } from './policy.reducer';
-import type { ClaimsState } from './claims.reducer';
-import type { UnderwritingState } from './underwriting.reducer';
-import type { UIState } from './ui.reducer';
+import type { ClaimsState } from '../reducers/claims.reducer';
+import type { UnderwritingState } from '../reducers/underwriting.reducer';
+import type { UIState } from '../reducers/ui.reducer';
 
 /**
  * Combined root state interface with complete type safety
  */
 export interface RootState {
-  auth: AuthState;
+  auth: AuthState & { sessionTimeout: number | null; securityEvents: SecurityEvent[] };
   policy: PolicyState;
   claims: ClaimsState;
   underwriting: UnderwritingState;
