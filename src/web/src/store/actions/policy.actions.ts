@@ -7,7 +7,7 @@
 import { createAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { IPolicy, PolicyStatus } from '../../types/policy.types';
 import PolicyService from '../../services/policy.service';
-import { ApiResponse, ErrorResponse } from '../../types/common.types';
+import { ErrorResponse } from '../../types/common.types';
 
 // Action type constants
 export enum PolicyActionTypes {
@@ -64,11 +64,11 @@ export const fetchPolicies = createAsyncThunk<
       pendingRequests.delete(requestKey);
 
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       return rejectWithValue({
         code: 'FETCH_POLICIES_ERROR',
-        message: error.message,
-        details: error.response?.data
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        details: error instanceof Error && 'response' in error ? (error as any).response?.data : undefined
       });
     }
   }
@@ -84,11 +84,11 @@ export const fetchPolicyDetails = createAsyncThunk<
   async (policyId, { rejectWithValue }) => {
     try {
       return await PolicyService.fetchPolicyDetails(policyId);
-    } catch (error) {
+    } catch (error: unknown) {
       return rejectWithValue({
         code: 'FETCH_POLICY_DETAILS_ERROR',
-        message: error.message,
-        details: error.response?.data
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        details: error instanceof Error && 'response' in error ? (error as any).response?.data : undefined
       });
     }
   }
@@ -109,11 +109,11 @@ export const createPolicy = createAsyncThunk<
       }
 
       return await PolicyService.submitNewPolicy(policyData);
-    } catch (error) {
+    } catch (error: unknown) {
       return rejectWithValue({
         code: 'CREATE_POLICY_ERROR',
-        message: error.message,
-        details: error.response?.data
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        details: error instanceof Error && 'response' in error ? (error as any).response?.data : undefined
       });
     }
   }
@@ -129,11 +129,11 @@ export const updatePolicy = createAsyncThunk<
   async ({ policyId, updates }, { rejectWithValue }) => {
     try {
       return await PolicyService.updatePolicyDetails(policyId, updates);
-    } catch (error) {
+    } catch (error: unknown) {
       return rejectWithValue({
         code: 'UPDATE_POLICY_ERROR',
-        message: error.message,
-        details: error.response?.data
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        details: error instanceof Error && 'response' in error ? (error as any).response?.data : undefined
       });
     }
   }
@@ -146,7 +146,7 @@ export const bindPolicy = createAsyncThunk<
   { rejectValue: ErrorResponse }
 >(
   'policy/bindPolicy',
-  async (policyId, { rejectWithValue, getState }) => {
+  async (policyId, { rejectWithValue }) => {
     try {
       // Verify policy is in approved status before binding
       const policy = await PolicyService.fetchPolicyDetails(policyId);
@@ -155,11 +155,11 @@ export const bindPolicy = createAsyncThunk<
       }
 
       return await PolicyService.bindApprovedPolicy(policyId);
-    } catch (error) {
+    } catch (error: unknown) {
       return rejectWithValue({
         code: 'BIND_POLICY_ERROR',
-        message: error.message,
-        details: error.response?.data
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        details: error instanceof Error && 'response' in error ? (error as any).response?.data : undefined
       });
     }
   }
