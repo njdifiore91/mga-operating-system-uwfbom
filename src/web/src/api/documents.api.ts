@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import axios, { AxiosProgressEvent } from 'axios';
+import { AxiosProgressEvent } from 'axios';
 import { apiClient } from '../config/api.config';
 import {
   IDocument,
@@ -18,8 +18,6 @@ import { API_ENDPOINTS } from '../constants/api.constants';
 
 // Constants for document handling
 const DOCUMENTS_API_PATH = API_ENDPOINTS.DOCUMENTS.BASE;
-const UPLOAD_CHUNK_SIZE = 1024 * 1024; // 1MB chunks
-const MAX_RETRIES = 3;
 const ALLOWED_FILE_TYPES = [
   'application/pdf',
   'image/jpeg',
@@ -114,7 +112,7 @@ const uploadDocument = async (
           if (onProgress && progressEvent.total) {
             onProgress({
               progress: Math.round((progressEvent.loaded * 100) / progressEvent.total),
-              status: DocumentStatus.UPLOADING,
+              status: DocumentStatus.PROCESSING,
               error: null,
               encryptionStatus: params.requireEncryption,
               validationErrors: []
@@ -125,8 +123,9 @@ const uploadDocument = async (
     );
 
     return response.data;
-  } catch (error) {
-    throw new Error(`Document upload failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Document upload failed: ${errorMessage}`);
   }
 };
 
@@ -154,8 +153,9 @@ const downloadDocument = async (
     );
 
     return response.data;
-  } catch (error) {
-    throw new Error(`Document download failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Document download failed: ${errorMessage}`);
   }
 };
 
@@ -185,8 +185,9 @@ const getDocuments = async (
     });
 
     return response.data;
-  } catch (error) {
-    throw new Error(`Failed to fetch documents: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Failed to fetch documents: ${errorMessage}`);
   }
 };
 
@@ -201,8 +202,9 @@ const getDocumentById = async (documentId: string): Promise<IDocument> => {
       `${DOCUMENTS_API_PATH}/${documentId}`
     );
     return response.data;
-  } catch (error) {
-    throw new Error(`Failed to fetch document: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Failed to fetch document: ${errorMessage}`);
   }
 };
 
@@ -214,8 +216,9 @@ const getDocumentById = async (documentId: string): Promise<IDocument> => {
 const deleteDocument = async (documentId: string): Promise<void> => {
   try {
     await apiClient.delete(`${DOCUMENTS_API_PATH}/${documentId}`);
-  } catch (error) {
-    throw new Error(`Failed to delete document: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Failed to delete document: ${errorMessage}`);
   }
 };
 
