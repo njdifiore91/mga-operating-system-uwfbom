@@ -5,7 +5,7 @@ import useWebSocket from 'react-use-websocket';
 import {
   claimsService,
 } from '../services/claims.service';
-import { Types } from '../types/claims.types';
+import { Claim, ClaimFilterParams, ClaimFormData, ClaimUpdateFormData } from '../types/claims.types';
 import { CLAIM_STATUS, CLAIM_STATUS_TRANSITIONS } from '../constants/claims.constants';
 
 // Types for hook state management
@@ -16,7 +16,7 @@ interface PaginationState {
 }
 
 interface SortingState {
-  sortBy: keyof Types.Claim;
+  sortBy: keyof Claim;
   sortOrder: 'asc' | 'desc';
 }
 
@@ -27,12 +27,12 @@ interface UploadProgressState {
 }
 
 interface ClaimOperations {
-  fetchClaims: (filters?: Types.ClaimFilterParams) => Promise<void>;
+  fetchClaims: (filters?: ClaimFilterParams) => Promise<void>;
   fetchClaimDetails: (claimId: string) => Promise<void>;
-  submitClaim: (data: Types.ClaimFormData) => Promise<void>;
-  updateClaimStatus: (claimId: string, data: Types.ClaimUpdateFormData) => Promise<void>;
+  submitClaim: (data: ClaimFormData) => Promise<void>;
+  updateClaimStatus: (claimId: string, data: ClaimUpdateFormData) => Promise<void>;
   uploadDocuments: (claimId: string, files: File[]) => Promise<void>;
-  validateStatusTransition: (currentStatus: keyof typeof CLAIM_STATUS, newStatus: keyof typeof CLAIM_STATUS) => boolean;
+  validateStatusTransition: (currentStatus: CLAIM_STATUS, newStatus: CLAIM_STATUS) => boolean;
   resetState: () => void;
 }
 
@@ -42,7 +42,7 @@ interface ClaimOperations {
  * @param options Additional configuration options
  */
 export function useClaims(
-  initialFilters: Types.ClaimFilterParams = {},
+  initialFilters: ClaimFilterParams = {},
   options: {
     autoFetch?: boolean;
     pageSize?: number;
@@ -50,11 +50,11 @@ export function useClaims(
   } = {}
 ) {
   // State management
-  const [claims, setClaims] = useState<Types.Claim[]>([]);
-  const [selectedClaim, setSelectedClaim] = useState<Types.Claim | null>(null);
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [filters, setFilters] = useState<Types.ClaimFilterParams>(initialFilters);
+  const [filters, setFilters] = useState<ClaimFilterParams>(initialFilters);
   const [uploadProgress, setUploadProgress] = useState<UploadProgressState>({
     progress: 0,
     fileName: '',
@@ -76,7 +76,7 @@ export function useClaims(
   // Hooks initialization
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { lastMessage, sendMessage } = useWebSocket(
+  const { lastMessage } = useWebSocket(
     process.env.REACT_APP_WS_URL || 'ws://localhost:3000/ws/claims',
     {
       shouldReconnect: () => options.enableRealTimeUpdates !== false,
@@ -97,20 +97,13 @@ export function useClaims(
     }
   }, [lastMessage]);
 
-  // Effect for initial data fetch
-  useEffect(() => {
-    if (options.autoFetch !== false) {
-      fetchClaims(filters);
-    }
-  }, [filters, pagination.page, pagination.pageSize, sorting.sortBy, sorting.sortOrder]);
-
   // Memoized operations
   const operations = useMemo<ClaimOperations>(() => ({
-    fetchClaims: async (newFilters?: Types.ClaimFilterParams) => {
+    fetchClaims: async (newFilters?: ClaimFilterParams) => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await claimsService.fetchClaimsList({
+        const response = await claimsService.fetchClaims({
           ...filters,
           ...newFilters,
           page: pagination.page,
@@ -140,7 +133,7 @@ export function useClaims(
       setIsLoading(true);
       setError(null);
       try {
-        const claim = await claimsService.fetchClaimDetails(claimId);
+        const claim = await claimsService.getClaimById(claimId);
         setSelectedClaim(claim);
         queryClient.setQueryData(['claim', claimId], claim);
       } catch (err) {
@@ -155,11 +148,11 @@ export function useClaims(
       }
     },
 
-    submitClaim: async (data: Types.ClaimFormData) => {
+    submitClaim: async (data: ClaimFormData) => {
       setIsLoading(true);
       setError(null);
       try {
-        const newClaim = await claimsService.submitNewClaim(data);
+        const newClaim = await claimsService.submitClaim(data);
         setClaims(prev => [newClaim, ...prev]);
         toast({
           title: 'Claim submitted successfully',
@@ -180,11 +173,11 @@ export function useClaims(
       }
     },
 
-    updateClaimStatus: async (claimId: string, data: Types.ClaimUpdateFormData) => {
+    updateClaimStatus: async (claimId: string, data: ClaimUpdateFormData) => {
       setIsLoading(true);
       setError(null);
       try {
-        const isValid = await claimsService.validateClaimTransition(claimId, data.status);
+        const isValid = await claimsService.validateStatusTransition(claimId, data.status);
         if (!isValid) {
           throw new Error('Invalid status transition');
         }
@@ -215,13 +208,7 @@ export function useClaims(
       setUploadProgress({ progress: 0, fileName: files[0].name, status: 'uploading' });
       try {
         for (const file of files) {
-          await claimsService.uploadClaimDocuments(claimId, file, (progress) => {
-            setUploadProgress(prev => ({
-              ...prev,
-              progress,
-              fileName: file.name
-            }));
-          });
+          await claimsService.uploadDocument(claimId, file, 'OTHER');
         }
         setUploadProgress(prev => ({ ...prev, status: 'completed' }));
         operations.fetchClaimDetails(claimId);
@@ -241,7 +228,7 @@ export function useClaims(
       }
     },
 
-    validateStatusTransition: (currentStatus: keyof typeof CLAIM_STATUS, newStatus: keyof typeof CLAIM_STATUS): boolean => {
+    validateStatusTransition: (currentStatus: CLAIM_STATUS, newStatus: CLAIM_STATUS): boolean => {
       return CLAIM_STATUS_TRANSITIONS[currentStatus].includes(newStatus);
     },
 
@@ -254,6 +241,13 @@ export function useClaims(
       setUploadProgress({ progress: 0, fileName: '', status: 'idle' });
     }
   }), [filters, pagination, sorting, toast, queryClient]);
+
+  // Effect for initial data fetch
+  useEffect(() => {
+    if (options.autoFetch !== false) {
+      operations.fetchClaims(filters);
+    }
+  }, [filters, pagination.page, pagination.pageSize, sorting.sortBy, sorting.sortOrder]);
 
   // Handle real-time updates
   const handleRealtimeUpdate = useCallback((update: any) => {
