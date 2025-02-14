@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/layout/AuthLayout';
 import LoginForm from '../../components/auth/LoginForm';
 import { useAuth } from '../../hooks/useAuth';
+import { AuthError } from '../../types/auth.types';
 
 /**
  * Enhanced login page component implementing OAuth 2.0 authentication,
@@ -13,8 +14,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { 
     isAuthenticated, 
-    authState, 
-    login 
+    authState
   } = useAuth();
 
   // Redirect authenticated users to dashboard
@@ -31,8 +31,12 @@ const LoginPage: React.FC = () => {
 
     // Monitor suspicious activities
     const securityMonitor = (event: Event) => {
-      if (event instanceof SecurityEvent) {
-        handleSecurityEvent(event);
+      if (event.type === 'securityEvent') {
+        handleSecurityEvent({
+          type: event.type,
+          severity: 'medium',
+          message: 'Security event detected'
+        });
       }
     };
 
@@ -58,7 +62,7 @@ const LoginPage: React.FC = () => {
         // Handle MFA flow
         navigate('/mfa', { 
           state: { 
-            sessionToken: authState.sessionToken 
+            sessionId: authState.user?.id 
           }
         });
       }
@@ -70,12 +74,12 @@ const LoginPage: React.FC = () => {
         message: 'Session validation failed'
       });
     }
-  }, [authState.status, authState.sessionToken, navigate]);
+  }, [authState.status, authState.user?.id, navigate]);
 
   /**
    * Processes security events and triggers appropriate responses
    */
-  const handleSecurityEvent = useCallback((event: SecurityEvent) => {
+  const handleSecurityEvent = useCallback((event: { type: string; severity: string; message: string }) => {
     // Log security event
     console.warn('Security event detected:', event);
 
