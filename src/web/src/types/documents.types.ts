@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { ID, ApiResponse, PaginationParams } from './common.types';
+import { ID } from './common.types';
 
 /**
  * Enumeration of document types supported in the system
