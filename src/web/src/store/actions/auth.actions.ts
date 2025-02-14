@@ -18,7 +18,8 @@ import { authService } from '../../services/auth.service';
 const AUTH_ACTION_TYPES = {
   LOGIN: 'auth/login',
   VERIFY_MFA: 'auth/verifyMFA',
-  REFRESH_SESSION: 'auth/refreshSession'
+  REFRESH_SESSION: 'auth/refreshSession',
+  LOGOUT: 'auth/logout'
 } as const;
 
 /**
@@ -102,11 +103,36 @@ export const refreshUserSession = createAsyncThunk<
   }
 );
 
+/**
+ * Enhanced async thunk for secure user logout
+ */
+export const logoutUser = createAsyncThunk<
+  void,
+  void,
+  { rejectValue: AuthError }
+>(
+  AUTH_ACTION_TYPES.LOGOUT,
+  async (_, { rejectWithValue }) => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      if (error instanceof Error) {
+        return rejectWithValue({
+          code: 'LOGOUT_ERROR',
+          message: error.message
+        });
+      }
+      throw error;
+    }
+  }
+);
+
 // Export action type constants for reducer consumption
 export const AUTH_ACTIONS = {
   LOGIN: loginUser.typePrefix,
   VERIFY_MFA: verifyMFACode.typePrefix,
-  REFRESH_SESSION: refreshUserSession.typePrefix
+  REFRESH_SESSION: refreshUserSession.typePrefix,
+  LOGOUT: logoutUser.typePrefix
 } as const;
 
 // Export action status types for component consumption
@@ -119,5 +145,8 @@ export const AUTH_STATUS = {
   MFA_REJECTED: verifyMFACode.rejected.type,
   REFRESH_PENDING: refreshUserSession.pending.type,
   REFRESH_FULFILLED: refreshUserSession.fulfilled.type,
-  REFRESH_REJECTED: refreshUserSession.rejected.type
+  REFRESH_REJECTED: refreshUserSession.rejected.type,
+  LOGOUT_PENDING: logoutUser.pending.type,
+  LOGOUT_FULFILLED: logoutUser.fulfilled.type,
+  LOGOUT_REJECTED: logoutUser.rejected.type
 } as const;
