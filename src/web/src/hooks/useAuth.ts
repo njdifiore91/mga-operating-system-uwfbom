@@ -5,25 +5,13 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
-import {
-  AuthService,
-  login,
-  verifyMFA,
-  logout,
-  refreshSession,
-  resetPassword,
-  checkPermission,
-  logSecurityEvent
-} from '../services/auth.service';
+import { authService } from '../services/auth.service';
 import {
   LoginCredentials,
   MFAVerification,
   PasswordReset,
   AuthResponse,
-  User,
   AuthState,
-  SecurityEvent,
-  AuthStatus
 } from '../types/auth.types';
 
 // Constants for session management
@@ -41,7 +29,6 @@ export function useAuth() {
   });
 
   // Refs for service instances and timers
-  const authService = useRef(new AuthService());
   const activityCheckTimer = useRef<NodeJS.Timeout>();
   const sessionTimeoutTimer = useRef<NodeJS.Timeout>();
 
@@ -74,7 +61,7 @@ export function useAuth() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await authService.current.login(credentials);
+      const response = await authService.authenticateUser(credentials);
       setAuthState({
         status: response.requiresMFA ? 'mfa_required' : 'authenticated',
         user: response.user,
@@ -101,7 +88,7 @@ export function useAuth() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await authService.current.verifyMFA(verification);
+      const response = await authService.verifyMFA(verification);
       setAuthState({
         status: 'authenticated',
         user: response.user,
@@ -127,7 +114,7 @@ export function useAuth() {
   const handleLogout = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      await authService.current.logout();
+      await authService.handleLogout();
       setAuthState({
         status: 'unauthenticated',
         user: null,
@@ -151,7 +138,7 @@ export function useAuth() {
     setIsLoading(true);
     setError(null);
     try {
-      await authService.current.resetPassword(resetData);
+      await authService.resetPassword(resetData);
       setAuthState(prev => ({ ...prev, status: 'unauthenticated' }));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Password reset failed';
@@ -166,7 +153,7 @@ export function useAuth() {
    * Checks user permission
    */
   const checkUserPermission = useCallback((permission: string): boolean => {
-    return authState.user ? authService.current.checkPermission(permission) : false;
+    return authState.user ? authService.checkPermission(permission) : false;
   }, [authState.user]);
 
   /**
