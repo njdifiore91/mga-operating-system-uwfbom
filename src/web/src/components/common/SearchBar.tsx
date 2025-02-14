@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { TextField } from '@mui/material'; // v5.14.x
-import { SearchIcon } from '@mui/icons-material'; // v5.14.x
+import { Search } from '@mui/icons-material'; // v5.14.x
 import { debounce } from 'lodash'; // v4.17.x
 import { validateRequired } from '../../utils/validation.utils';
 
@@ -136,7 +136,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         error={!!error}
         helperText={error}
         InputProps={{
-          startAdornment: <SearchIcon color="action" />,
+          startAdornment: <Search color="action" />,
           'aria-label': ariaLabel,
           'aria-invalid': !!error,
           'aria-describedby': error ? 'search-error-text' : undefined
