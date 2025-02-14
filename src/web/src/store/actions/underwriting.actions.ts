@@ -6,7 +6,7 @@
 
 import { createAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
-import { retry } from 'axios-retry';
+import axiosRetry from 'axios-retry';
 import Cache from 'node-cache';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
 
@@ -14,9 +14,7 @@ import { UnderwritingService } from '../../services/underwriting.service';
 import { 
   IRiskAssessmentDisplay, 
   IUnderwritingQueueItem, 
-  IUnderwritingDecisionForm,
-  UnderwritingStatus,
-  RiskSeverity 
+  IUnderwritingDecisionForm
 } from '../../types/underwriting.types';
 
 // Initialize services
@@ -101,7 +99,7 @@ export const fetchRiskAssessment = (
         }
 
         // Fetch with retry logic
-        const assessment = await retry(
+        const assessment = await axiosRetry(
           async () => await underwritingService.getRiskAssessmentWithFormatting(policyId),
           { 
             retries: 3,
@@ -147,7 +145,7 @@ export const submitUnderwritingRequest = (
         // Optimistic update for UI responsiveness
         dispatch(updateQueueStart());
 
-        const assessment = await retry(
+        const assessment = await axiosRetry(
           async () => await underwritingService.submitPolicyForUnderwriting(
             policyId,
             underwritingData
@@ -193,7 +191,7 @@ export const processUnderwritingDecision = (
       try {
         dispatch(processDecisionStart(policyId));
 
-        await retry(
+        await axiosRetry(
           async () => await underwritingService.processUnderwritingDecision(
             policyId,
             decision
@@ -238,7 +236,7 @@ export const updateUnderwritingQueue = (
         dispatch(updateQueueStart());
 
         const queue = await underwritingService.getFilteredUnderwritingQueue(filters)
-          .toPromise();
+          .toPromise() as IUnderwritingQueueItem[];
 
         dispatch(updateQueueSuccess(queue));
         span.setStatus({ code: SpanStatusCode.OK });
