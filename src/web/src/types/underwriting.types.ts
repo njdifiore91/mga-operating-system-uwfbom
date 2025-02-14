@@ -31,6 +31,19 @@ export enum RiskSeverity {
 }
 
 /**
+ * Interface for risk trend analysis
+ * Provides trend indicators and historical risk data analysis
+ */
+export interface IRiskTrend {
+    direction: 'increasing' | 'decreasing' | 'stable';
+    percentageChange: number;
+    periodStart: Date;
+    periodEnd: Date;
+    comparisonFactors: string[];
+    confidenceLevel: number;
+}
+
+/**
  * Interface for displaying comprehensive risk assessment data
  * Supports automated underwriting workflows with tracking and accountability
  */
