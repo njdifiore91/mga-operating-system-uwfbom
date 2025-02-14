@@ -4,14 +4,13 @@
  * @version 1.0.0
  */
 
-import { AxiosResponse } from 'axios'; // ^1.4.0
 import {
   getPolicies,
   getPolicyById,
   createPolicy,
   updatePolicy,
-  createEndorsement,
-  bindPolicy
+  addPolicyEndorsement,
+  cancelPolicy
 } from '../api/policy.api';
 import {
   IPolicy,
@@ -68,14 +67,14 @@ export class PolicyService {
 
           // Cache successful response
           listCache.set(cacheKey, {
-            data: data.policies,
-            total: data.total,
+            data,
+            total: data.length,
             timestamp: Date.now()
           });
 
           return {
-            policies: data.policies,
-            total: data.total
+            policies: data,
+            total: data.length
           };
         } catch (e) {
           error = e as Error;
@@ -131,7 +130,7 @@ export class PolicyService {
    * @param policyData Policy data to create
    * @returns Promise resolving to created policy
    */
-  static async submitNewPolicy(policyData: Partial<IPolicy>): Promise<IPolicy> {
+  static async submitNewPolicy(policyData: Omit<IPolicy, 'id' | 'createdAt' | 'updatedAt'>): Promise<IPolicy> {
     try {
       // Validate required fields
       if (!policyData.type || !policyData.effectiveDate || !policyData.coverages) {
@@ -216,7 +215,7 @@ export class PolicyService {
     endorsementData: Omit<IEndorsement, 'id' | 'policyId'>
   ): Promise<IEndorsement> {
     try {
-      const response = await createEndorsement(policyId, endorsementData);
+      const response = await addPolicyEndorsement(policyId, endorsementData);
       const { data, success } = response.data;
 
       if (!success || !data) {
@@ -252,7 +251,7 @@ export class PolicyService {
         timestamp: Date.now()
       });
 
-      const response = await bindPolicy(policyId);
+      const response = await updatePolicy(policyId, { status: PolicyStatus.BOUND });
       const { data, success } = response.data;
 
       if (!success || !data) {
