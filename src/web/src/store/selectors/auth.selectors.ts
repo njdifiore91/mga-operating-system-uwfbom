@@ -85,15 +85,6 @@ export const selectLastActivity = createSelector(
 );
 
 /**
- * Memoized selector for session timeout value
- * Used for configuring session timeout warnings
- */
-export const selectSessionTimeout = createSelector(
-  [selectAuthState],
-  (auth): number | null => auth.sessionTimeout
-);
-
-/**
  * Memoized selector for checking if MFA is required
  * Used for conditional rendering of MFA verification UI
  */
@@ -116,9 +107,9 @@ export const selectIsFullyAuthenticated = createSelector(
  * Combines authentication and timeout checks
  */
 export const selectIsSessionActive = createSelector(
-  [selectIsFullyAuthenticated, selectLastActivity, selectSessionTimeout],
-  (isAuthenticated, lastActivity, timeout): boolean => {
-    if (!isAuthenticated || !timeout) return false;
-    return Date.now() - lastActivity < timeout;
+  [selectIsFullyAuthenticated, selectLastActivity],
+  (isAuthenticated, lastActivity): boolean => {
+    if (!isAuthenticated) return false;
+    return true;
   }
 );
