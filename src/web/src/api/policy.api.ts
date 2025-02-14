@@ -115,12 +115,12 @@ export async function updatePolicy(
 }
 
 /**
- * Adds an endorsement to a policy
+ * Creates an endorsement for a policy
  * @param policyId Policy identifier
  * @param endorsement Endorsement data to add
  * @returns Promise resolving to updated policy with new endorsement
  */
-export async function addPolicyEndorsement(
+export async function createEndorsement(
   policyId: string,
   endorsement: Omit<IEndorsement, 'id' | 'policyId'>
 ): Promise<AxiosResponse<ApiResponse<IPolicy>>> {
@@ -130,6 +130,23 @@ export async function addPolicyEndorsement(
   return apiClient.post<ApiResponse<IPolicy>>(
     API_ENDPOINTS.POLICY.ENDORSEMENTS.replace(':id', policyId),
     endorsement
+  );
+}
+
+/**
+ * Binds a policy after approval
+ * @param policyId Policy identifier
+ * @returns Promise resolving to bound policy
+ */
+export async function bindPolicy(
+  policyId: string
+): Promise<AxiosResponse<ApiResponse<IPolicy>>> {
+  // Invalidate cache
+  policyCache.delete(policyId);
+
+  return apiClient.put<ApiResponse<IPolicy>>(
+    `${API_ENDPOINTS.POLICY.UPDATE.replace(':id', policyId)}/bind`,
+    { status: PolicyStatus.BOUND }
   );
 }
 
