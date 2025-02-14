@@ -53,6 +53,22 @@ interface IUnderwritingSubmission {
   }>;
 }
 
+interface IUnderwritingDecision {
+  policyId: string;
+  decision: 'APPROVE' | 'REJECT' | 'REFER';
+  notes: string;
+  conditions?: Record<string, unknown>;
+  decidedBy: string;
+}
+
+interface IUnderwritingQueueItem {
+  policyId: string;
+  submittedAt: string;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  status: 'PENDING' | 'IN_REVIEW' | 'COMPLETED';
+  assignedTo?: string;
+}
+
 /**
  * Retrieves risk assessment data for a specific policy
  * @param policyId Unique identifier of the policy
@@ -167,6 +183,66 @@ export async function submitForUnderwriting(
   }
 }
 
+/**
+ * Makes a final underwriting decision for a policy
+ * @param policyId Unique identifier of the policy
+ * @param decision Underwriting decision data
+ * @returns Promise resolving to the recorded decision
+ */
+export async function makeUnderwritingDecision(
+  policyId: string,
+  decision: IUnderwritingDecision
+): Promise<IUnderwritingDecision> {
+  try {
+    const response = await UNDERWRITING_CIRCUIT_BREAKER.fire(
+      apiClient.post<IUnderwritingDecision>(
+        `${API_ENDPOINTS.UNDERWRITING.BASE}/decisions/${policyId}`,
+        decision,
+        {
+          headers: {
+            'X-Request-Priority': 'high',
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Underwriting decision submission failed:', {
+      policyId,
+      error,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
+/**
+ * Retrieves the current underwriting queue
+ * @returns Promise resolving to array of queue items
+ */
+export async function getUnderwritingQueue(): Promise<IUnderwritingQueueItem[]> {
+  try {
+    const response = await UNDERWRITING_CIRCUIT_BREAKER.fire(
+      apiClient.get<IUnderwritingQueueItem[]>(
+        `${API_ENDPOINTS.UNDERWRITING.BASE}/queue`,
+        {
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        }
+      )
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to retrieve underwriting queue:', {
+      error,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
 // Event listener for circuit breaker state changes
 UNDERWRITING_CIRCUIT_BREAKER.on('open', () => {
   console.warn('Underwriting circuit breaker opened:', {
@@ -180,5 +256,7 @@ UNDERWRITING_CIRCUIT_BREAKER.on('open', () => {
 export type {
   IRiskAssessmentDisplay,
   IRiskFactor,
-  IUnderwritingSubmission
+  IUnderwritingSubmission,
+  IUnderwritingDecision,
+  IUnderwritingQueueItem
 };
