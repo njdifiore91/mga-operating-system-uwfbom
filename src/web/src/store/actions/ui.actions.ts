@@ -44,9 +44,9 @@ export interface Modal {
  * Action creator for updating global loading state
  * @param state - Current loading state
  */
-export const setLoading = createAction<LoadingState>(
+export const setLoading = createAction(
   UI_ACTIONS.SET_LOADING,
-  (state) => {
+  (state: LoadingState) => {
     // Validate loading state
     if (!['idle', 'loading', 'success', 'error'].includes(state)) {
       throw new Error(`Invalid loading state: ${state}`);
@@ -59,9 +59,9 @@ export const setLoading = createAction<LoadingState>(
  * Action creator for updating theme mode with Material Design 3.0 tokens
  * @param mode - Theme mode selection
  */
-export const setThemeMode = createAction<ThemeMode>(
+export const setThemeMode = createAction(
   UI_ACTIONS.SET_THEME_MODE,
-  (mode) => {
+  (mode: ThemeMode) => {
     // Validate theme mode
     if (!['light', 'dark', 'system'].includes(mode)) {
       throw new Error(`Invalid theme mode: ${mode}`);
@@ -80,9 +80,9 @@ export const setThemeMode = createAction<ThemeMode>(
  * xl: 1440px+
  * @param breakpoint - Current breakpoint value
  */
-export const setBreakpoint = createAction<Breakpoint>(
+export const setBreakpoint = createAction(
   UI_ACTIONS.SET_BREAKPOINT,
-  (breakpoint) => {
+  (breakpoint: Breakpoint) => {
     // Validate breakpoint
     if (!['xs', 'sm', 'md', 'lg', 'xl'].includes(breakpoint)) {
       throw new Error(`Invalid breakpoint: ${breakpoint}`);
@@ -103,9 +103,9 @@ export const setSidebarVisible = createAction<boolean>(
  * Action creator for managing notifications
  * @param notification - Notification object
  */
-export const setNotification = createAction<Notification | null>(
+export const setNotification = createAction(
   UI_ACTIONS.SET_NOTIFICATION,
-  (notification) => {
+  (notification: Notification | null) => {
     if (notification && !notification.id) {
       throw new Error('Notification must have an id');
     }
@@ -117,9 +117,9 @@ export const setNotification = createAction<Notification | null>(
  * Action creator for managing modal state
  * @param modal - Modal configuration object
  */
-export const setModal = createAction<Modal | null>(
+export const setModal = createAction(
   UI_ACTIONS.SET_MODAL,
-  (modal) => {
+  (modal: Modal | null) => {
     if (modal && !modal.id) {
       throw new Error('Modal must have an id');
     }
