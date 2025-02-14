@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, Typography, CircularProgress, Tooltip, Box } from '@mui/material';
+import { Card, CardContent, Typography, CircularProgress, Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { PieChart, ResponsiveContainer, Pie, Cell, Tooltip as RechartsTooltip } from 'recharts';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -27,7 +27,7 @@ interface RiskScoreDisplay {
 
 // Color mapping function with WCAG compliance
 const getRiskLevelColor = (riskLevel: string, theme: any) => {
-  const colors = {
+  const colors: Record<string, string> = {
     low: theme.palette.success.main,
     medium: theme.palette.warning.main,
     high: theme.palette.error.main
@@ -140,7 +140,7 @@ const RiskScoreWidget: React.FC<RiskScoreWidgetProps> = ({
 
   const formattedScore = metrics ? formatRiskScore(
     metrics.automationRate,
-    metrics.historicalTrend || []
+    []
   ) : null;
 
   return (
