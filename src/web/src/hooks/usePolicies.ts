@@ -27,7 +27,7 @@ interface UsePoliciesOptions {
 /**
  * Enhanced custom hook for policy management with caching and pagination
  */
-export function usePolicies(options: UsePoliciesOptions = {}) {
+export const usePolicies = (options: UsePoliciesOptions = {}) => {
   const {
     autoFetch = true,
     page = 1,
@@ -185,4 +185,4 @@ export function usePolicies(options: UsePoliciesOptions = {}) {
     refreshPolicies,
     clearCache,
   };
-}
+};
