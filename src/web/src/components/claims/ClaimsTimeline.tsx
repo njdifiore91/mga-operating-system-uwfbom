@@ -9,19 +9,14 @@ import {
 } from '@mui/lab';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { styled } from '@mui/material/styles';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import {
   Description as DocumentIcon,
   Event as StatusIcon,
-  FiberManualRecord as DefaultIcon,
 } from '@mui/icons-material';
 import { Claim } from '../../types/claims.types';
 import { CLAIM_STATUS } from '../../constants/claims.constants';
 import StatusBadge from '../common/StatusBadge';
-
-// Version of external packages used
-// @mui/lab: ^5.14.x
-// @tanstack/react-virtual: ^3.0.x
 
 interface ClaimsTimelineProps {
   claim: Claim;
@@ -35,7 +30,7 @@ interface TimelineEvent {
   status: keyof typeof CLAIM_STATUS;
   description: string;
   metadata?: Record<string, unknown>;
-  icon: React.ComponentType;
+  icon: React.ComponentType<{ fontSize: string }>;
 }
 
 const StyledTimeline = styled(Timeline)(({ theme }) => ({
@@ -66,6 +61,13 @@ const TimelineContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
+interface StatusChange {
+  date: Date;
+  status: keyof typeof CLAIM_STATUS;
+  previousStatus: keyof typeof CLAIM_STATUS;
+  reason?: string;
+}
+
 const generateTimelineEvents = (claim: Claim): TimelineEvent[] => {
   const events: TimelineEvent[] = [];
 
@@ -84,8 +86,8 @@ const generateTimelineEvents = (claim: Claim): TimelineEvent[] => {
   });
 
   // Add status change events
-  if (claim.statusHistory) {
-    claim.statusHistory.forEach((change, index) => {
+  if ('statusHistory' in claim && Array.isArray(claim.statusHistory)) {
+    claim.statusHistory.forEach((change: StatusChange, index: number) => {
       events.push({
         id: `status-${claim.id}-${index}`,
         date: change.date,
@@ -124,7 +126,6 @@ const generateTimelineEvents = (claim: Claim): TimelineEvent[] => {
 };
 
 const ClaimsTimeline: React.FC<ClaimsTimelineProps> = React.memo(({ claim, className }) => {
-  const theme = useTheme();
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Generate and memoize timeline events
