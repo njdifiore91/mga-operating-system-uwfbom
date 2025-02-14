@@ -1,3 +1,20 @@
+error TS2305: Module '"@mui/x-data-grid"' has no exported member 'formatDate'.
+```
+
+2. The third error indicates unused variable:
+```
+error TS6133: 'theme' is declared but its value is never read.
+```
+
+3. The fourth error indicates unused variable:
+```
+error TS6133: 'updatePolicy' is declared but its value is never read.
+```
+
+I'll regenerate the file with fixes:
+
+# src/web/src/components/policy/PolicyDetails.tsx
+```typescript
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Card,
@@ -10,7 +27,6 @@ import {
   Box,
   useTheme
 } from '@mui/material';
-import { formatCurrency, formatDate } from '@mui/x-data-grid';
 import { IPolicy, PolicyType, PolicyStatus } from '../../types/policy.types';
 import PolicyService from '../../services/policy.service';
 import PolicyTimeline from './PolicyTimeline';
@@ -77,8 +93,7 @@ const PolicyDetails: React.FC<PolicyDetailsProps> = ({
   refreshInterval,
   showActions = true
 }) => {
-  const theme = useTheme();
-  const { policy, loading, error, updatePolicy, refreshData } = usePolicyDetails(
+  const { policy, loading, error, refreshData } = usePolicyDetails(
     policyId,
     refreshInterval
   );
@@ -186,15 +201,15 @@ const PolicyDetails: React.FC<PolicyDetailsProps> = ({
               </Grid>
               <Grid item xs={6}>
                 <Typography color="textSecondary">Total Premium</Typography>
-                <Typography>{formatCurrency(totalPremium, 'USD')}</Typography>
+                <Typography>${totalPremium.toLocaleString()}</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography color="textSecondary">Effective Date</Typography>
-                <Typography>{formatDate(new Date(policy.effectiveDate))}</Typography>
+                <Typography>{new Date(policy.effectiveDate).toLocaleDateString()}</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography color="textSecondary">Expiration Date</Typography>
-                <Typography>{formatDate(new Date(policy.expirationDate))}</Typography>
+                <Typography>{new Date(policy.expirationDate).toLocaleDateString()}</Typography>
               </Grid>
             </Grid>
           </Grid>
@@ -210,11 +225,11 @@ const PolicyDetails: React.FC<PolicyDetailsProps> = ({
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
                     <Typography color="textSecondary">Limit</Typography>
-                    <Typography>{formatCurrency(coverage.limit, 'USD')}</Typography>
+                    <Typography>${coverage.limit.toLocaleString()}</Typography>
                   </Grid>
                   <Grid item xs={6}>
                     <Typography color="textSecondary">Premium</Typography>
-                    <Typography>{formatCurrency(coverage.premium, 'USD')}</Typography>
+                    <Typography>${coverage.premium.toLocaleString()}</Typography>
                   </Grid>
                 </Grid>
               </Box>
@@ -238,7 +253,7 @@ const PolicyDetails: React.FC<PolicyDetailsProps> = ({
               <Grid item xs={12} sm={6} md={3}>
                 <Typography color="textSecondary">Review Date</Typography>
                 <Typography>
-                  {formatDate(new Date(policy.underwritingInfo.reviewDate))}
+                  {new Date(policy.underwritingInfo.reviewDate).toLocaleDateString()}
                 </Typography>
               </Grid>
               <Grid item xs={12}>
