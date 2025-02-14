@@ -3,7 +3,7 @@ import { Box, Container, useTheme, useMediaQuery } from '@mui/material'; // v5.1
 import Sidebar from '../common/Sidebar';
 import Topbar from '../common/Topbar';
 import useBreakpoints from '../../hooks/useBreakpoints';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 
 /**
  * Props interface for MainLayout component with accessibility and styling options
@@ -28,22 +28,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 }) => {
   // Theme and responsive breakpoints
   const theme = useTheme();
-  const { isMobile, isTablet, isDesktop } = useBreakpoints();
+  const { isMobile } = useBreakpoints();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
 
   // Authentication and user context
-  const { isAuthenticated, userRole } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Sidebar state management
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
-  const [sidebarFocusTrap, setSidebarFocusTrap] = useState(false);
 
   /**
    * Handles sidebar toggle with accessibility considerations
    */
   const handleSidebarToggle = useCallback(() => {
     setIsSidebarOpen(prev => !prev);
-    setSidebarFocusTrap(!isSidebarOpen);
 
     // Announce state change to screen readers
     const announcement = !isSidebarOpen ? 'Navigation menu opened' : 'Navigation menu closed';
