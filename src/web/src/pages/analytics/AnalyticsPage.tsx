@@ -4,7 +4,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import PageHeader from '../../components/common/PageHeader';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
-import { useAnalytics } from '@mga/analytics'; // v1.0.x
+import { useAnalytics } from '@mga/analytics'; // Will be available after package installation
 
 /**
  * AnalyticsPage Component
