@@ -10,20 +10,17 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Box,
-  IconButton
+  Box
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridRowSelectionModel } from '@mui/x-data-grid';
 import RiskScoreWidget from '../analytics/RiskScoreWidget';
 import { useUnderwriting } from '../../hooks/useUnderwriting';
 import StatusBadge from '../common/StatusBadge';
 import { 
-  UNDERWRITING_STATUS,
-  RISK_SEVERITY,
-  UNDERWRITING_QUEUE_COLUMNS 
+  RISK_SEVERITY
 } from '../../constants/underwriting.constants';
-import { UnderwritingStatus, RiskSeverity } from '../../types/underwriting.types';
+import { UnderwritingStatus } from '../../types/underwriting.types';
 
 // Initial filters for the underwriting queue
 const initialFilters = {
@@ -56,13 +53,10 @@ const UnderwritingDashboard: React.FC = React.memo(() => {
 
   // Initialize underwriting hook with real-time updates
   const {
-    riskAssessment,
     queue,
     isLoading,
     error,
-    submitForUnderwriting,
     makeDecision,
-    updateFilters,
     pagination
   } = useUnderwriting(initialFilters);
 
@@ -152,7 +146,7 @@ const UnderwritingDashboard: React.FC = React.memo(() => {
               size="small"
               variant="contained"
               color="success"
-              onClick={() => handleAction(params.row.policyId, 'APPROVE')}
+              onClick={() => handleAction('APPROVE')}
               disabled={params.row.status !== UnderwritingStatus.PENDING_REVIEW}
             >
               Approve
@@ -163,7 +157,7 @@ const UnderwritingDashboard: React.FC = React.memo(() => {
               size="small"
               variant="contained"
               color="error"
-              onClick={() => handleAction(params.row.policyId, 'DECLINE')}
+              onClick={() => handleAction('DECLINE')}
               disabled={params.row.status !== UnderwritingStatus.PENDING_REVIEW}
             >
               Decline
@@ -175,7 +169,7 @@ const UnderwritingDashboard: React.FC = React.memo(() => {
   ], [theme]);
 
   // Handle individual and bulk actions
-  const handleAction = useCallback((policyId: string, action: string) => {
+  const handleAction = useCallback((action: string) => {
     setConfirmDialog({
       open: true,
       action,
@@ -231,14 +225,14 @@ const UnderwritingDashboard: React.FC = React.memo(() => {
                     <Button
                       variant="contained"
                       color="success"
-                      onClick={() => handleAction(selectedRows[0], 'APPROVE')}
+                      onClick={() => handleAction('APPROVE')}
                     >
                       Approve Selected
                     </Button>
                     <Button
                       variant="contained"
                       color="error"
-                      onClick={() => handleAction(selectedRows[0], 'DECLINE')}
+                      onClick={() => handleAction('DECLINE')}
                     >
                       Decline Selected
                     </Button>
@@ -251,10 +245,9 @@ const UnderwritingDashboard: React.FC = React.memo(() => {
               rows={queue?.items || []}
               columns={columns}
               loading={isLoading}
-              error={error}
               checkboxSelection
               disableRowSelectionOnClick
-              onRowSelectionModelChange={(newSelection) => {
+              onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
                 setSelectedRows(newSelection as string[]);
               }}
               rowSelectionModel={selectedRows}
@@ -262,7 +255,7 @@ const UnderwritingDashboard: React.FC = React.memo(() => {
               rowCount={queue?.totalCount || 0}
               page={pagination.cursor?.page || 0}
               pageSize={10}
-              onPageChange={(page) => pagination.handlePagination({ page })}
+              onPageChange={(newPage: number) => pagination.handlePagination({ page: newPage })}
               autoHeight
               sx={{
                 '& .MuiDataGrid-cell:focus': {
