@@ -33,6 +33,35 @@ const RETRY_DELAY = 1000;
  */
 export class PolicyService {
   /**
+   * Validates policy data with OneShield integration
+   * @param policyData Policy data to validate
+   * @returns Promise resolving to validation result
+   */
+  static async validateWithOneShield(policyData: Partial<IPolicy>): Promise<{ isValid: boolean; errors: string[] }> {
+    try {
+      // Call OneShield validation API
+      const response = await fetch(`${process.env.REACT_APP_ONESHIELD_API_URL}/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': process.env.REACT_APP_ONESHIELD_API_KEY || ''
+        },
+        body: JSON.stringify(policyData)
+      });
+
+      const result = await response.json();
+
+      return {
+        isValid: result.valid,
+        errors: result.errors || []
+      };
+    } catch (error) {
+      console.error('OneShield validation error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Retrieves a paginated list of policies with optional filtering
    * @param filters Optional filters for policy search
    * @param page Page number for pagination
