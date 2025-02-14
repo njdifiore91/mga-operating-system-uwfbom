@@ -5,8 +5,7 @@
  */
 
 import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
-import { Claim, ClaimFilters, PaginationState } from '../../types/claims.types';
-import { CLAIM_STATUS } from '../../constants/claims.constants';
+import { Claim } from '../../types/claims.types';
 import {
   fetchClaimsAsync,
   fetchClaimDetailsAsync,
@@ -29,6 +28,23 @@ interface ErrorState {
   message: string;
   details?: unknown;
   timestamp: number;
+}
+
+// Filters interface
+interface ClaimFilters {
+  status?: string;
+  policyId?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+}
+
+// Pagination interface
+interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 }
 
 // Claims state interface
@@ -152,7 +168,7 @@ const claimsSlice = createSlice({
     });
 
     // Create claim handling with optimistic updates
-    builder.addCase(createClaimAsync.pending, (state, action) => {
+    builder.addCase(createClaimAsync.pending, (state) => {
       state.loading = true;
       state.error = null;
     });
@@ -208,7 +224,7 @@ const claimsSlice = createSlice({
     });
     builder.addCase(uploadClaimDocumentAsync.fulfilled, (state, action) => {
       const { claimId } = action.meta.arg;
-      const updatedClaim = action.payload;
+      const updatedClaim = action.payload as Claim;
       state.claims = state.claims.map(claim =>
         claim.id === claimId ? updatedClaim : claim
       );
@@ -280,7 +296,7 @@ export const selectFilteredClaims = createSelector(
 );
 
 export const selectClaimById = createSelector(
-  [selectClaimsState, (state, claimId: string) => claimId],
+  [selectClaimsState, (_state, claimId: string) => claimId],
   (claimsState, claimId) => {
     const cacheKey = `claim_${claimId}`;
     const cachedClaim = claimsState.cache[cacheKey];
