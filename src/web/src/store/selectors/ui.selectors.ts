@@ -6,7 +6,6 @@
 
 import { createSelector } from '@reduxjs/toolkit'; // v1.9.x
 import type { RootState } from '../reducers';
-import type { ThemeMode, Breakpoint, Notification, Modal } from '../actions/ui.actions';
 
 /**
  * Base selector for accessing UI state slice with type safety
@@ -26,7 +25,7 @@ export const selectLoading = createSelector(
  */
 export const selectNotifications = createSelector(
   [selectUI],
-  (ui) => ui.notificationQueue.map(notification => ({
+  (ui) => ui.notificationQueue.map((notification: { type: string; duration?: number; isPersistent?: boolean }) => ({
     ...notification,
     // Map notification types to Material Design tokens
     severity: notification.type === 'error' ? 'error' :
