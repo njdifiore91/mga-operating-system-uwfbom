@@ -8,7 +8,6 @@ import { useNotification } from '../../hooks/useNotification';
 import { IPolicy } from '../../types/policy.types';
 import { PolicyService } from '../../services/policy.service';
 import { POLICY_ROUTES } from '../../constants/routes.constants';
-import { trackEvent } from '@analytics/react';
 
 /**
  * NewPolicyPage component for creating new insurance policies
@@ -39,12 +38,6 @@ const NewPolicyPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Track submission attempt
-      trackEvent('policy_submission_started', {
-        policyType: policyData.type,
-        coverageCount: policyData.coverages.length
-      });
-
       // Submit policy
       const createdPolicy = await PolicyService.submitNewPolicy(policyData);
 
@@ -56,22 +49,11 @@ const NewPolicyPage: React.FC = () => {
         ariaLive: 'polite'
       });
 
-      // Track successful submission
-      trackEvent('policy_submission_completed', {
-        policyId: createdPolicy.id,
-        policyType: createdPolicy.type
-      });
-
       // Navigate to policy details
       navigate(`${POLICY_ROUTES.DETAILS.replace(':id', createdPolicy.id)}`);
     } catch (error) {
       // Handle submission error
       console.error('Policy creation failed:', error);
-
-      // Track submission failure
-      trackEvent('policy_submission_failed', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
 
       // Show error notification
       showNotification({
