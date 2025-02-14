@@ -5,7 +5,7 @@
  */
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import {
+import type {
   AuthState,
   User,
   AuthResponse,
@@ -15,8 +15,7 @@ import {
 import {
   loginUser,
   verifyMFACode,
-  refreshUserSession,
-  logoutUser
+  refreshUserSession
 } from '../actions/auth.actions';
 
 // Security event interface for audit logging
@@ -72,7 +71,7 @@ const authSlice = createSlice({
         state.securityEvents.push({
           timestamp: Date.now(),
           type: 'SESSION_TIMEOUT',
-          details: { userId: state.user?.id }
+          details: {}
         });
       }
     },
@@ -84,9 +83,11 @@ const authSlice = createSlice({
       const newState = action.payload;
       // Validate state before sync
       if (newState.status && typeof newState.loading === 'boolean') {
-        state.status = newState.status;
-        state.user = newState.user;
-        state.error = newState.error;
+        Object.assign(state, {
+          status: newState.status,
+          user: newState.user,
+          error: newState.error
+        });
         state.securityEvents.push({
           timestamp: Date.now(),
           type: 'STATE_SYNCED',
@@ -109,7 +110,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
+        Object.assign(state, { user: action.payload.user });
         state.status = action.payload.requiresMFA ? 'mfa_required' : 'authenticated';
         state.sessionTimeout = 3600000; // 1 hour
         state.lastActivity = Date.now();
@@ -149,7 +150,7 @@ const authSlice = createSlice({
       })
       .addCase(verifyMFACode.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
+        Object.assign(state, { user: action.payload.user });
         state.status = 'authenticated';
         state.securityEvents.push({
           timestamp: Date.now(),
@@ -204,9 +205,9 @@ const authSlice = createSlice({
         });
       })
 
-    // Logout flow
+    // Logout handling
     builder
-      .addCase(logoutUser.fulfilled, (state) => {
+      .addCase('auth/logout/fulfilled', (state) => {
         state.status = 'unauthenticated';
         state.user = null;
         state.sessionTimeout = null;
