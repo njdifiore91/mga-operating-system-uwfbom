@@ -7,13 +7,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { DatePicker as MuiDatePicker } from '@mui/x-date-pickers/DatePicker'; // v6.x
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker'; // v6.x
-import { TextField } from '@mui/material'; // v5.14.x
+import { TextField, TextFieldProps } from '@mui/material'; // v5.14.x
 import { formatDate, parseDate } from '../../utils/date.utils';
 import { validateDateRange } from '../../utils/validation.utils';
 import { Timestamp, DateRange } from '../../types/common.types';
 
 // Constants for date formatting and validation
-const DATE_FORMAT = 'MMM dd, yyyy';
 const MIN_POLICY_TERM = 1; // days
 const MAX_POLICY_TERM = 366; // days
 
@@ -67,8 +66,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   // Validation rules with defaults
   const rules: PolicyDateValidationRules = {
-    minDate: minDate ? parseDate(minDate) : undefined,
-    maxDate: maxDate ? parseDate(maxDate) : undefined,
+    minDate: minDate ? parseDate(minDate) || undefined : undefined,
+    maxDate: maxDate ? parseDate(maxDate) || undefined : undefined,
     businessDaysOnly: validationRules?.businessDaysOnly ?? false,
     allowPastDates: validationRules?.allowPastDates ?? false,
     termLimits: validationRules?.termLimits ?? {
@@ -177,26 +176,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         dateRange?.endDate ? parseDate(dateRange.endDate) : null
       ]}
       onChange={handleRangeChange}
-      renderInput={(startProps, endProps) => (
-        <>
+      slots={{
+        textField: (props: TextFieldProps) => (
           <TextField
-            {...startProps}
-            label={`${label} Start`}
+            {...props}
+            label={`${label} ${props.label}`}
             error={!isValid || error}
             helperText={validationError || helperText}
-            aria-label={`${ariaLabel} start date`}
+            aria-label={`${ariaLabel} ${props.label}`}
             aria-describedby={ariaDescribedBy}
           />
-          <TextField
-            {...endProps}
-            label={`${label} End`}
-            error={!isValid || error}
-            helperText={validationError || helperText}
-            aria-label={`${ariaLabel} end date`}
-            aria-describedby={ariaDescribedBy}
-          />
-        </>
-      )}
+        )
+      }}
       minDate={rules.minDate}
       maxDate={rules.maxDate}
     />
@@ -205,17 +196,19 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       value={selectedDate}
       onChange={handleDateChange}
       disabled={disabled}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          error={!isValid || error}
-          helperText={validationError || helperText}
-          aria-label={ariaLabel}
-          aria-describedby={ariaDescribedBy}
-          fullWidth
-        />
-      )}
+      slots={{
+        textField: (props: TextFieldProps) => (
+          <TextField
+            {...props}
+            label={label}
+            error={!isValid || error}
+            helperText={validationError || helperText}
+            aria-label={ariaLabel}
+            aria-describedby={ariaDescribedBy}
+            fullWidth
+          />
+        )
+      }}
       minDate={rules.minDate}
       maxDate={rules.maxDate}
     />
