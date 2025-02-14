@@ -4,13 +4,11 @@
  * @version 1.0.0
  */
 
-import jwtDecode from 'jwt-decode'; // v3.1.2
 import FingerprintJS from '@fingerprintjs/fingerprintjs'; // v3.4.0
 import { createLogger, format, transports } from 'winston'; // v3.8.2
 import {
   LoginCredentials,
   MFAVerification,
-  PasswordReset,
   AuthResponse,
   User,
   AuthTokens,
