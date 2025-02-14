@@ -7,7 +7,6 @@
 
 import { z } from 'zod'; // v3.21.4
 import {
-  Claim,
   CreateClaimRequest,
   UpdateClaimStatusRequest,
   ClaimLocation,
@@ -69,13 +68,13 @@ export const validateClaimForm = (formData: CreateClaimRequest): ValidationResul
   // Location validation
   const locationErrors = validateLocation(formData.location);
   if (Object.keys(locationErrors).length > 0) {
-    errors.location = locationErrors;
+    errors.location = Object.values(locationErrors).flat();
   }
 
   // Claimant information validation
   const claimantErrors = validateClaimantInfo(formData.claimantInfo);
   if (Object.keys(claimantErrors).length > 0) {
-    errors.claimantInfo = claimantErrors;
+    errors.claimantInfo = Object.values(claimantErrors).flat();
   }
 
   // Initial reserve amount validation
@@ -108,14 +107,15 @@ export const validateClaimStatusUpdate = (
   const errors: Record<string, string[]> = {};
 
   // Validate status value
-  if (!Object.values(CLAIM_STATUS).includes(updateData.status)) {
+  const newStatus = updateData.status as CLAIM_STATUS;
+  if (!Object.values(CLAIM_STATUS).includes(newStatus)) {
     errors.status = ['Invalid claim status'];
     return { isValid: false, errors };
   }
 
   // Validate status transition
   const allowedTransitions = CLAIM_STATUS_TRANSITIONS[currentStatus];
-  if (!allowedTransitions.includes(updateData.status)) {
+  if (!allowedTransitions.includes(newStatus)) {
     errors.status = [
       `Cannot transition from ${currentStatus} to ${updateData.status}. ` +
       `Allowed transitions: ${allowedTransitions.join(', ')}`
@@ -129,7 +129,7 @@ export const validateClaimStatusUpdate = (
     CLAIM_STATUS.REOPENED
   ];
   
-  if (requiresNotes.includes(updateData.status)) {
+  if (requiresNotes.includes(newStatus)) {
     const notesResult = validateRequired(updateData.notes, 'Notes', {
       customMessage: `Notes are required when changing status to ${updateData.status}`
     });
@@ -150,7 +150,7 @@ export const validateClaimStatusUpdate = (
  * @returns ValidationResult with security and accessibility checks
  */
 export const validateClaimDocument = (file: File): ValidationResult => {
-  const errors: Record<string, string[]> = [];
+  const errors: Record<string, string[]> = {};
 
   // Validate file presence
   if (!file) {
