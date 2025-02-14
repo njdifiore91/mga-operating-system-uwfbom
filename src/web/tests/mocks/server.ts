@@ -16,31 +16,34 @@ const server = setupServer(...handlers);
 
 // Configure request logging for development and debugging
 if (process.env.NODE_ENV === 'development') {
-  server.events.on('request:start', ({ request }) => {
-    console.log('MSW intercepted:', request.method, request.url.toString());
+  server.events.on('request:start', ({ request: { method, url } }) => {
+    console.log('MSW intercepted:', method, url.toString());
   });
 
-  server.events.on('request:match', ({ request }) => {
-    console.log('MSW matched handler:', request.method, request.url.toString());
+  server.events.on('request:match', ({ request: { method, url } }) => {
+    console.log('MSW matched handler:', method, url.toString());
   });
 
-  server.events.on('request:unhandled', ({ request }) => {
-    console.warn('MSW no handler found:', request.method, request.url.toString());
+  server.events.on('request:unhandled', ({ request: { method, url } }) => {
+    console.warn('MSW no handler found:', method, url.toString());
   });
 }
 
 // Configure response logging for development and debugging
 if (process.env.NODE_ENV === 'development') {
-  server.events.on('response:mocked', ({ response, request }) => {
+  server.events.on('response:mocked', (responseInfo) => {
+    const { status, statusText } = responseInfo;
+    const url = responseInfo.request.url.toString();
     console.log('MSW mocked response:', {
-      url: request.url.toString(),
-      status: response.status,
-      statusText: response.statusText,
+      url,
+      status,
+      statusText,
     });
   });
 
-  server.events.on('response:bypass', ({ request }) => {
-    console.log('MSW bypassed request:', request.method, request.url.toString());
+  server.events.on('response:bypass', (responseInfo) => {
+    const { method, url } = responseInfo.request;
+    console.log('MSW bypassed request:', method, url.toString());
   });
 }
 
