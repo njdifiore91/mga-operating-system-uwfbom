@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'; // react-i18next@13.x.x
 import { IPolicy, PolicyStatus, PolicyType } from '../../types/policy.types';
 import DataGrid from '../common/DataGrid';
 import LoadingSpinner from '../common/LoadingSpinner';
-import usePolicies from '../../hooks/usePolicies';
+import { usePolicies } from '../../hooks/usePolicies';
 import { formatCurrency } from '../../utils/format.utils';
 
 /**
@@ -71,7 +71,7 @@ const PolicyList: React.FC<PolicyListProps> = memo(({
       headerName: t('policy.fields.policyNumber'),
       flex: 1,
       minWidth: 150,
-      renderCell: (params) => (
+      renderCell: (params: { value: string }) => (
         <Box component="span" sx={{ fontWeight: 'medium' }}>
           {params.value}
         </Box>
@@ -82,14 +82,14 @@ const PolicyList: React.FC<PolicyListProps> = memo(({
       headerName: t('policy.fields.type'),
       flex: 1,
       minWidth: 180,
-      valueFormatter: ({ value }) => t(`policy.types.${value.toLowerCase()}`)
+      valueFormatter: ({ value }: { value: string }) => t(`policy.types.${value.toLowerCase()}`)
     },
     {
       field: 'status',
       headerName: t('policy.fields.status'),
       flex: 1,
       minWidth: 140,
-      renderCell: (params) => (
+      renderCell: (params: { value: PolicyStatus }) => (
         <Box
           component="span"
           sx={{
@@ -110,7 +110,7 @@ const PolicyList: React.FC<PolicyListProps> = memo(({
       flex: 1,
       minWidth: 120,
       type: 'number',
-      valueFormatter: ({ value }) => formatCurrency(value)
+      valueFormatter: ({ value }: { value: number }) => formatCurrency(value)
     },
     {
       field: 'effectiveDate',
@@ -118,7 +118,7 @@ const PolicyList: React.FC<PolicyListProps> = memo(({
       flex: 1,
       minWidth: 150,
       type: 'date',
-      valueFormatter: ({ value }) => new Date(value).toLocaleDateString()
+      valueFormatter: ({ value }: { value: string }) => new Date(value).toLocaleDateString()
     },
     {
       field: 'expirationDate',
@@ -126,17 +126,17 @@ const PolicyList: React.FC<PolicyListProps> = memo(({
       flex: 1,
       minWidth: 150,
       type: 'date',
-      valueFormatter: ({ value }) => new Date(value).toLocaleDateString()
+      valueFormatter: ({ value }: { value: string }) => new Date(value).toLocaleDateString()
     }
   ], [t, theme]);
 
   // Handle pagination changes with validation
-  const handlePaginationChange = useCallback((params: { page: number; pageSize: number }) => {
+  const handlePaginationChange = useCallback((params: { page: number }) => {
     setPage(params.page);
   }, []);
 
   // Handle row selection
-  const handleRowClick = useCallback((params) => {
+  const handleRowClick = useCallback((params: { row: IPolicy }) => {
     if (onPolicySelect) {
       onPolicySelect(params.row);
     }
@@ -197,7 +197,7 @@ const PolicyList: React.FC<PolicyListProps> = memo(({
           page,
           limit: pageSize,
           sortBy: initialSort.field,
-          sortOrder: initialSort.direction
+          sortOrder: initialSort.direction as 'asc' | 'desc'
         }}
         onPaginationChange={handlePaginationChange}
         onRowClick={handleRowClick}
