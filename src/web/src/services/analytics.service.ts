@@ -6,33 +6,44 @@
  */
 
 import { memoize } from 'lodash'; // ^4.17.21
-import { format, differenceInDays, isValid } from 'date-fns'; // ^2.30.0
 import {
   PolicyMetrics,
   UnderwritingMetrics,
   ComplianceMetrics,
-  MetricDefinition,
-  AnomalyConfig,
-  MetricTrend,
-  TrendPeriod
+  MetricTrend
 } from '../types/analytics.types';
 import {
   getDashboardMetrics,
   getPerformanceReport,
-  getMetricsByType,
-  subscribeToMetricUpdates
+  getMetricsByType
 } from '../api/analytics.api';
 
 // Constants for analytics configuration
-const TREND_CONFIDENCE_THRESHOLD = 0.85;
 const ANOMALY_DETECTION_WINDOW = 30; // days
-const METRIC_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const TREND_PERIODS: Record<TrendPeriod, number> = {
+const TREND_PERIODS = {
   daily: 1,
   weekly: 7,
   monthly: 30,
   quarterly: 90
-};
+} as const;
+
+type TrendPeriod = keyof typeof TREND_PERIODS;
+
+interface AnomalyConfig {
+  threshold: number;
+  sensitivity: number;
+}
+
+interface MetricDefinition {
+  name: string;
+  calculation: string;
+  dataSource: string;
+  aggregation?: 'sum' | 'average' | 'count';
+  thresholds?: {
+    warning: number;
+    critical: number;
+  };
+}
 
 /**
  * Calculates metric trends with anomaly detection and confidence scoring
@@ -75,8 +86,6 @@ export const calculateMetricTrends = memoize(
           values[values.length - 1]
         ),
         trend: trendDirection,
-        confidence,
-        anomalies,
         lastUpdated: new Date().toISOString()
       };
     }
