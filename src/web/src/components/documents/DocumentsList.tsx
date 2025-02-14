@@ -9,26 +9,25 @@ import {
   Skeleton 
 } from '@mui/material';
 import { 
-  DownloadIcon, 
-  DeleteIcon, 
-  MoreVertIcon, 
-  LockIcon, 
-  SecurityIcon 
+  Downloading as DownloadIcon, 
+  Delete as DeleteIcon, 
+  MoreVert as MoreVertIcon, 
+  Lock as LockIcon, 
+  Security 
 } from '@mui/icons-material';
 import DataGrid from '../common/DataGrid';
 import { useDocuments } from '../../hooks/useDocuments';
 import { 
   IDocument, 
   DocumentType, 
-  DocumentStatus, 
-  SecurityClassification 
+  DocumentStatus
 } from '../../types/documents.types';
 
 interface DocumentsListProps {
   policyId?: string;
   documentType?: DocumentType;
   onDocumentSelect?: (document: IDocument) => void;
-  securityLevel?: SecurityClassification;
+  securityLevel?: string;
   enableBulkActions?: boolean;
   onError?: (error: Error) => void;
 }
@@ -37,8 +36,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
   policyId,
   documentType,
   onDocumentSelect,
-  securityLevel = SecurityClassification.STANDARD,
-  enableBulkActions = false,
+  securityLevel = 'STANDARD',
   onError
 }) => {
   // State for action menu
@@ -51,7 +49,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
     isLoading,
     error,
     uploadState,
-    downloadDocument,
+    getDownloadUrl,
     deleteDocument
   } = useDocuments({
     policyId,
@@ -74,12 +72,12 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
   // Handle document download with security checks
   const handleDownload = useCallback(async (document: IDocument) => {
     try {
-      await downloadDocument(document.id);
+      await getDownloadUrl(document.id);
       handleMenuClose();
     } catch (error) {
       onError?.(error as Error);
     }
-  }, [downloadDocument, handleMenuClose, onError]);
+  }, [getDownloadUrl, handleMenuClose, onError]);
 
   // Handle document deletion with confirmation
   const handleDelete = useCallback(async (document: IDocument) => {
@@ -106,9 +104,9 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
               <LockIcon fontSize="small" color="primary" />
             </Tooltip>
           )}
-          {params.row.securityClassification !== SecurityClassification.PUBLIC && (
+          {params.row.securityClassification !== 'PUBLIC' && (
             <Tooltip title={`Security Level: ${params.row.securityClassification}`}>
-              <SecurityIcon fontSize="small" color="warning" />
+              <Security fontSize="small" color="warning" />
             </Tooltip>
           )}
           {params.value}
@@ -221,9 +219,6 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
         sortOrder: 'desc'
       }}
       onPaginationChange={() => {}}
-      disableSelectionOnClick
-      autoHeight
-      getRowId={(row) => row.id}
       ariaLabel="Documents list"
       sx={{
         '& .MuiDataGrid-row': {
