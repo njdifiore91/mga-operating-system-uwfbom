@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Chip, ChipProps } from '@mui/material';
-import { styled, useTheme, Theme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { PolicyStatus } from '../../types/policy.types';
 import { CLAIM_STATUS } from '../../constants/claims.constants';
 
@@ -21,7 +21,7 @@ const StyledChip = styled(Chip, {
   shouldForwardProp: (prop) => !['statusType', 'status'].includes(prop as string),
 })<{ statusType: StatusType; status: string }>(({ theme, statusType, status }) => {
   const getStatusColor = (type: StatusType, currentStatus: string): string => {
-    const colors = {
+    const colors: Record<StatusType, Record<string, string>> = {
       policy: {
         [PolicyStatus.DRAFT]: theme.palette.grey[500],
         [PolicyStatus.SUBMITTED]: theme.palette.info.main,
@@ -82,14 +82,12 @@ const StatusBadge: React.FC<StatusBadgeProps> = React.memo(({
   className,
   ...props
 }) => {
-  const theme = useTheme();
-
   // Generate display label if not provided
   const displayLabel = useMemo(() => {
     if (label) return label;
 
     // Map status to human-readable labels
-    const labels = {
+    const labels: Record<StatusType, Record<string, string>> = {
       policy: {
         [PolicyStatus.DRAFT]: 'Draft',
         [PolicyStatus.SUBMITTED]: 'Submitted',
@@ -100,7 +98,17 @@ const StatusBadge: React.FC<StatusBadgeProps> = React.memo(({
         [PolicyStatus.CANCELLED]: 'Cancelled',
         [PolicyStatus.EXPIRED]: 'Expired'
       },
-      claim: CLAIM_STATUS,
+      claim: {
+        [CLAIM_STATUS.NEW]: 'New',
+        [CLAIM_STATUS.UNDER_REVIEW]: 'Under Review',
+        [CLAIM_STATUS.PENDING_INFO]: 'Pending Info',
+        [CLAIM_STATUS.APPROVED]: 'Approved',
+        [CLAIM_STATUS.IN_PAYMENT]: 'In Payment',
+        [CLAIM_STATUS.PAID]: 'Paid',
+        [CLAIM_STATUS.DENIED]: 'Denied',
+        [CLAIM_STATUS.CLOSED]: 'Closed',
+        [CLAIM_STATUS.REOPENED]: 'Reopened'
+      },
       underwriting: {
         PENDING: 'Pending Review',
         APPROVED: 'Approved',
