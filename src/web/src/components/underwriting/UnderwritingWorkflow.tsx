@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Stepper,
   Step,
@@ -15,18 +15,14 @@ import {
   Alert,
   Box,
   Paper,
-  Typography,
-  useTheme
+  Typography
 } from '@mui/material';
 import { useUnderwriting } from '../../hooks/useUnderwriting';
 import { useAuditLogger } from '@mga/audit-logger'; // ^1.0.0
 import {
   UnderwritingStatus,
-  RiskSeverity,
-  IRiskAssessmentDisplay,
   IUnderwritingDecisionForm
 } from '../../types/underwriting.types';
-import { RISK_SEVERITY, RISK_SCORE_RANGES } from '../../constants/underwriting.constants';
 
 // Workflow step definitions
 const WORKFLOW_STEPS = [
@@ -53,14 +49,11 @@ export const UnderwritingWorkflow: React.FC<UnderwritingWorkflowProps> = ({
   onComplete,
   onError
 }) => {
-  // Theme and styles
-  const theme = useTheme();
-
   // State management
   const [activeStep, setActiveStep] = useState(initialStep);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [decision, setDecision] = useState<Partial<IUnderwritingDecisionForm>>({});
+  const [decision] = useState<Partial<IUnderwritingDecisionForm>>({});
 
   // Refs for WebSocket and cleanup
   const webSocketRef = useRef<WebSocket | null>(null);
@@ -70,8 +63,7 @@ export const UnderwritingWorkflow: React.FC<UnderwritingWorkflowProps> = ({
   const {
     riskAssessment,
     submitForUnderwriting,
-    makeDecision,
-    realTimeUpdates
+    makeDecision
   } = useUnderwriting({
     policyId,
     status: UnderwritingStatus.IN_REVIEW
@@ -168,10 +160,7 @@ export const UnderwritingWorkflow: React.FC<UnderwritingWorkflowProps> = ({
         case 4:
           // Submit final decision
           if (decision.decision) {
-            await makeDecision({
-              policyId,
-              ...decision as IUnderwritingDecisionForm
-            });
+            await makeDecision(decision as IUnderwritingDecisionForm);
             onComplete?.(decision as IUnderwritingDecisionForm);
           }
           break;
