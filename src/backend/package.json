@@ -91,7 +91,7 @@
     "retry-axios": "^3.0.0",
     "retry-ts": "^0.1.4",
     "sequelize": "^6.32.1",
-    "sequelize-pool": "^6.1.0",
+    "sequelize-pool": "^8.0.0",
     "typeorm": "^0.3.17",
     "uuid": "^9.0.0",
     "validator": "^13.0.0",
