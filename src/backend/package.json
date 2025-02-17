@@ -96,7 +96,7 @@
     "uuid": "^9.0.0",
     "validator": "^13.0.0",
     "winston": "^3.8.2",
-    "winston-cloudwatch": "^3.1.1",
+    "winston-cloudwatch": "^6.3.0",
     "winston-daily-rotate-file": "^4.7.1",
     "winston-elasticsearch": "^0.17.1",
     "yup": "^1.2.0",
