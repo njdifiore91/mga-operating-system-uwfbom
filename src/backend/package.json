@@ -46,7 +46,7 @@
     "axios": "^1.4.0",
     "bcrypt": "^5.1.0",
     "buffer": "^6.0.3",
-    "cache-manager": "^5.2.0",
+    "cache-manager": "^6.4.0",
     "circuit-breaker-js": "^1.0.1",
     "circuit-breaker-ts": "^1.0.0",
     "compression": "^1.7.4",
