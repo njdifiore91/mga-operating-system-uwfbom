@@ -67,7 +67,7 @@ const formatValue = (
  */
 const getTrendIcon = (trend: MetricTrend['trend']) => {
   const iconProps = {
-    fontSize: 'small' as const,
+    fontSize: "small" as const,
     sx: { 
       verticalAlign: 'middle',
       ml: 1
