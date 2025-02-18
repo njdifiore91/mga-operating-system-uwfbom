@@ -23,7 +23,7 @@ interface TimelineEvent {
   metadata?: {
     premiumChange?: number;
     policyNumber?: string;
-    changes?: Record<string, any>;
+    changes?: Record<string, unknown>;
   };
   importance: EventImportance;
 }
