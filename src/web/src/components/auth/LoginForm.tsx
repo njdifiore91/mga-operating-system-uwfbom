@@ -64,7 +64,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
   } = useForm({
     resolver: yupResolver(loginSchema),
     mode: 'onBlur',
-    context: { requiresMFA }
+    context: { requiresMFA },
   });
 
   // Handle form submission
