@@ -33,7 +33,6 @@ const getRiskLevelColor = (riskLevel: string, theme: any) => {
     high: theme.palette.error.main
   };
   
-  // Ensure contrast ratio meets WCAG AA standards
   return colors[riskLevel.toLowerCase()] || theme.palette.grey[500];
 };
 
@@ -140,7 +139,7 @@ const RiskScoreWidget: React.FC<RiskScoreWidgetProps> = ({
 
   const formattedScore = metrics ? formatRiskScore(
     metrics.automationRate,
-    []
+    []  // Empty array as historicalTrend is not available in metrics
   ) : null;
 
   return (
