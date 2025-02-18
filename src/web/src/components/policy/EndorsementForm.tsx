@@ -229,7 +229,7 @@ export const EndorsementForm: React.FC<EndorsementFormProps> = ({
                 fullWidth
                 required
                 error={!!errors.changes}
-                helperText={errors.changes?.message?.toString()}
+                helperText={errors.changes?.message || ''}
                 onChange={(e) => field.onChange(JSON.parse(e.target.value || '{}'))}
                 value={JSON.stringify(field.value, null, 2)}
               />
@@ -250,7 +250,7 @@ export const EndorsementForm: React.FC<EndorsementFormProps> = ({
                 fullWidth
                 required
                 error={!!errors.premiumChange}
-                helperText={errors.premiumChange?.message}
+                helperText={errors.premiumChange?.message || ''}
                 InputProps={{
                   startAdornment: '$',
                 }}
