@@ -5,7 +5,7 @@ import { formatCurrency } from '../../utils/format.utils';
 import DataGrid from '../common/DataGrid';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { useClaims } from '../../hooks/useClaims';
-import { CLAIM_STATUS_LABELS, CLAIM_STATUS } from '../../constants/claims.constants';
+import { CLAIM_STATUS_LABELS } from '../../constants/claims.constants';
 import type { Claim } from '../../types/claims.types';
 
 interface ClaimsListProps {
@@ -147,7 +147,7 @@ const useGridColumns = (): GridColDef[] => {
       minWidth: 150,
       renderCell: (params) => (
         <Chip
-          label={CLAIM_STATUS_LABELS[params.value as keyof typeof CLAIM_STATUS]}
+          label={CLAIM_STATUS_LABELS[params.value as keyof typeof CLAIM_STATUS_LABELS]}
           className={`status-chip ${params.row.priorityLevel === 'HIGH' ? 'high-priority' : ''}`}
           size="small"
         />
