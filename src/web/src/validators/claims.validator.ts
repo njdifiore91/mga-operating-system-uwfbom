@@ -102,20 +102,19 @@ export const validateClaimForm = (formData: CreateClaimRequest): ValidationResul
  */
 export const validateClaimStatusUpdate = (
   updateData: UpdateClaimStatusRequest,
-  currentStatus: keyof typeof CLAIM_STATUS
+  currentStatus: CLAIM_STATUS
 ): ValidationResult => {
   const errors: Record<string, string[]> = {};
 
   // Validate status value
-  const newStatus = updateData.status as CLAIM_STATUS;
-  if (!Object.values(CLAIM_STATUS).includes(newStatus)) {
+  if (!Object.values(CLAIM_STATUS).includes(updateData.status as CLAIM_STATUS)) {
     errors.status = ['Invalid claim status'];
     return { isValid: false, errors };
   }
 
   // Validate status transition
   const allowedTransitions = CLAIM_STATUS_TRANSITIONS[currentStatus];
-  if (!allowedTransitions.includes(newStatus)) {
+  if (!allowedTransitions.includes(updateData.status as CLAIM_STATUS)) {
     errors.status = [
       `Cannot transition from ${currentStatus} to ${updateData.status}. ` +
       `Allowed transitions: ${allowedTransitions.join(', ')}`
@@ -129,7 +128,7 @@ export const validateClaimStatusUpdate = (
     CLAIM_STATUS.REOPENED
   ];
   
-  if (requiresNotes.includes(newStatus)) {
+  if (requiresNotes.includes(updateData.status as CLAIM_STATUS)) {
     const notesResult = validateRequired(updateData.notes, 'Notes', {
       customMessage: `Notes are required when changing status to ${updateData.status}`
     });
