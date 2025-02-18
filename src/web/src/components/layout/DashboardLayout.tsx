@@ -141,6 +141,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {/* Page content */}
           <StyledContent
             maxWidth={false}
+            role="main"
             aria-label="Page content"
           >
             {children}
