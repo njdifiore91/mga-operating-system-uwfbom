@@ -12,7 +12,9 @@ import {
   createClaimAsync,
   updateClaimStatusAsync,
   uploadClaimDocumentAsync,
-  syncWithOneShieldAsync
+  syncWithOneShieldAsync,
+  ClaimFilters,
+  PaginationState
 } from '../actions/claims.actions';
 
 // Cache entry type for memoization
@@ -28,23 +30,6 @@ interface ErrorState {
   message: string;
   details?: unknown;
   timestamp: number;
-}
-
-// Filters interface
-interface ClaimFilters {
-  status?: string;
-  policyId?: string;
-  startDate?: string;
-  endDate?: string;
-  search?: string;
-}
-
-// Pagination interface
-interface PaginationState {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
 }
 
 // Claims state interface
