@@ -10,7 +10,7 @@ import {
 import { 
   IRiskAssessmentDisplay, 
   UnderwritingStatus,
-  RiskSeverity
+  RiskSeverity 
 } from '../../src/types/underwriting.types';
 import type { 
   ApiResponse 
@@ -72,7 +72,7 @@ const generateMockClaim = (id: string): Claim => ({
 });
 
 const generateMockRiskAssessment = (policyId: string): IRiskAssessmentDisplay => ({
-  policyId: `${policyId}-0000-0000-0000-000000000000`,
+  policyId,
   riskScore: 85,
   severity: RiskSeverity.LOW,
   factors: [
@@ -96,9 +96,9 @@ const generateMockRiskAssessment = (policyId: string): IRiskAssessmentDisplay =>
 // Policy Handlers
 export const policyHandlers = [
   // GET /api/policies - List policies with pagination
-  rest.get('/api/policies', async (req, res, ctx) => {
-    const page = Number(req.url.searchParams.get('page')) || 1;
-    const limit = Number(req.url.searchParams.get('limit')) || 10;
+  rest.get('/api/policies', async (_, res, ctx) => {
+    const page = Number(_.url.searchParams.get('page')) || 1;
+    const limit = Number(_.url.searchParams.get('limit')) || 10;
     
     const mockPolicies = Array(limit).fill(null).map((_, i) => 
       generateMockPolicy(`${page}-${i}`)
