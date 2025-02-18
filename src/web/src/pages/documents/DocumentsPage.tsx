@@ -16,7 +16,6 @@ import {
   Security as SecurityIcon,
   FilterList as FilterIcon
 } from '@mui/icons-material';
-import { useEncryption } from '@aws-crypto/client-browser';
 import DocumentsList from '../../components/documents/DocumentsList';
 import { 
   IDocument, 
@@ -49,11 +48,6 @@ const DocumentsPage: React.FC = () => {
   } = useDocuments({
     securityClass: 'STANDARD',
     retentionDays: 7
-  });
-
-  // Initialize encryption client for secure document handling
-  const { encryptionClient } = useEncryption({
-    keyring: process.env.REACT_APP_AWS_KMS_KEY_ID
   });
 
   /**
