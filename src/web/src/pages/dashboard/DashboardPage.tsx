@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
 import useWebSocket from 'react-use-websocket';
+import { useNetworkStatus } from '@react-hooks/network-status';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
@@ -30,6 +31,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const { online: isOnline } = useNetworkStatus();
 
   // State management
   const [offlineMode, setOfflineMode] = useState<boolean>(false);
@@ -84,14 +86,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     }
   }, [lastMessage, updateMetricsCache]);
 
-  // Monitor WebSocket connection
+  // Monitor network status and WebSocket connection
   useEffect(() => {
-    setOfflineMode(readyState !== WebSocket.OPEN);
-  }, [readyState]);
+    setOfflineMode(!isOnline || readyState !== WebSocket.OPEN);
+  }, [isOnline, readyState]);
 
   // Memoized layout configuration
   const layoutConfig = useMemo(() => ({
-    maxWidth: isTablet ? 'lg' : false as const,
+    maxWidth: isTablet ? 'lg' : false,
     padding: theme.spacing(isMobile ? 2 : 3),
     marginTop: theme.spacing(2)
   }), [theme, isMobile, isTablet]);
@@ -99,7 +101,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   return (
     <DashboardLayout>
       <Container
-        maxWidth={layoutConfig.maxWidth}
+        maxWidth={layoutConfig.maxWidth as any}
         sx={{
           padding: layoutConfig.padding,
           marginTop: layoutConfig.marginTop
@@ -124,18 +126,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   );
 };
 
-// Apply decorators
-const EnhancedDashboardPage = withErrorBoundary(DashboardPage);
-
-// Higher-order component for error boundary
-function withErrorBoundary(Component: React.FC<DashboardPageProps>) {
-  return function WithErrorBoundaryWrapper(props: DashboardPageProps) {
-    return (
-      <ErrorBoundary>
-        <Component {...props} />
-      </ErrorBoundary>
-    );
-  };
-}
+// Apply error boundary
+const EnhancedDashboardPage = (props: DashboardPageProps) => (
+  <ErrorBoundary>
+    <DashboardPage {...props} />
+  </ErrorBoundary>
+);
 
 export default EnhancedDashboardPage;
