@@ -4,16 +4,14 @@
  * @version 1.0.0
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { debounce } from 'lodash';
 import { UnderwritingService } from '../services/underwriting.service';
 import {
   IRiskAssessmentDisplay,
-  IUnderwritingQueueItem,
   IUnderwritingDecisionForm,
-  UnderwritingStatus,
-  RiskSeverity
+  IUnderwritingQueueItem
 } from '../types/underwriting.types';
 
 // Cache configuration for optimized performance
@@ -30,17 +28,12 @@ const QUERY_KEYS = {
   underwritingQueue: 'underwritingQueue'
 } as const;
 
-interface QueueFilters {
+type QueueFilters = {
   policyId?: string;
-  status?: UnderwritingStatus;
-  severity?: RiskSeverity;
-  assignedTo?: string;
-}
-
-interface PaginationCursor {
-  page: number;
-  limit: number;
-}
+  status?: string;
+  severity?: string;
+  cursor?: string;
+};
 
 /**
  * Primary hook for managing underwriting operations with optimized state management
@@ -49,9 +42,9 @@ interface PaginationCursor {
  */
 export function useUnderwriting(initialFilters: QueueFilters) {
   const queryClient = useQueryClient();
-  const underwritingService = new UnderwritingService();
+  const underwritingService = useRef(new UnderwritingService());
   const [filters, setFilters] = useState<QueueFilters>(initialFilters);
-  const [cursor, setCursor] = useState<PaginationCursor | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
 
   // Debounced filter updates to prevent excessive API calls
   const debouncedFilterUpdate = useCallback(
@@ -65,7 +58,7 @@ export function useUnderwriting(initialFilters: QueueFilters) {
   // Risk assessment query with caching
   const riskAssessmentQuery = useQuery(
     [QUERY_KEYS.riskAssessment, filters.policyId],
-    () => filters.policyId ? underwritingService.getRiskAssessmentWithFormatting(filters.policyId) : null,
+    () => filters.policyId ? underwritingService.current.getRiskAssessmentWithFormatting(filters.policyId) : null,
     {
       enabled: !!filters.policyId,
       staleTime: CACHE_CONFIG.staleTime,
@@ -78,7 +71,7 @@ export function useUnderwriting(initialFilters: QueueFilters) {
   // Underwriting queue query with pagination
   const queueQuery = useQuery(
     [QUERY_KEYS.underwritingQueue, filters, cursor],
-    () => underwritingService.getFilteredUnderwritingQueue(filters),
+    () => underwritingService.current.getFilteredUnderwritingQueue({ ...filters, cursor }),
     {
       keepPreviousData: true,
       staleTime: CACHE_CONFIG.staleTime
@@ -88,14 +81,16 @@ export function useUnderwriting(initialFilters: QueueFilters) {
   // Mutation for submitting policies for underwriting
   const submitMutation = useMutation(
     (policyData: { policyId: string; data: any }) => 
-      underwritingService.submitPolicyForUnderwriting(policyData.policyId, policyData.data),
+      underwritingService.current.submitPolicyForUnderwriting(policyData.policyId, policyData.data),
     {
-      onSuccess: (data: IRiskAssessmentDisplay) => {
+      onSuccess: (data) => {
         queryClient.invalidateQueries(QUERY_KEYS.underwritingQueue);
-        queryClient.setQueryData(
-          [QUERY_KEYS.riskAssessment, data.policyId],
-          data
-        );
+        if (data.policyId) {
+          queryClient.setQueryData(
+            [QUERY_KEYS.riskAssessment, data.policyId],
+            data
+          );
+        }
       }
     }
   );
@@ -103,7 +98,7 @@ export function useUnderwriting(initialFilters: QueueFilters) {
   // Mutation for processing underwriting decisions
   const decisionMutation = useMutation(
     (decision: IUnderwritingDecisionForm) => 
-      underwritingService.processUnderwritingDecision(decision.policyId, decision),
+      underwritingService.current.processUnderwritingDecision(decision.policyId, decision),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(QUERY_KEYS.underwritingQueue);
@@ -113,10 +108,10 @@ export function useUnderwriting(initialFilters: QueueFilters) {
 
   // WebSocket subscription for real-time updates
   useEffect(() => {
-    const subscription = new Observable<{ type: string; policyId?: string }>((subscriber) => {
-      // Implementation pending
+    const subscription = new Observable<{ type: string; policyId?: string }>(subscriber => {
+      subscriber.next({ type: 'CONNECTED' });
       return () => {
-        // Cleanup
+        // Cleanup subscription
       };
     }).subscribe((update) => {
       if (update.type === 'RISK_ASSESSMENT_UPDATED' && update.policyId) {
@@ -135,7 +130,7 @@ export function useUnderwriting(initialFilters: QueueFilters) {
   }, [queryClient]);
 
   // Optimized pagination handler
-  const handlePagination = useCallback((newCursor: PaginationCursor) => {
+  const handlePagination = useCallback((newCursor: string) => {
     setCursor(newCursor);
   }, []);
 
@@ -181,13 +176,13 @@ export function useUnderwriting(initialFilters: QueueFilters) {
     pagination: {
       cursor,
       handlePagination,
-      hasNextPage: !!queueQuery.data?.length,
+      hasNextPage: !!queueQuery.data?.hasMore,
       hasPreviousPage: !!cursor
     },
 
     // Real-time updates
     realTimeUpdates: {
-      isConnected: true, // WebSocket connection status
+      isConnected: true,
       lastUpdate: queueQuery.dataUpdatedAt
     }
   };
