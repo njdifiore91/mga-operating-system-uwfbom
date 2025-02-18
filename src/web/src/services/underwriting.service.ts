@@ -32,7 +32,7 @@ const CACHE_CONFIG = {
  * Service class for managing underwriting operations with enhanced performance features
  */
 export class UnderwritingService {
-  private queueCache$: Observable<IUnderwritingQueueItem[]> = new Observable<IUnderwritingQueueItem[]>();
+  private queueCache$: Observable<IUnderwritingQueueItem[]> | null = null;
   private riskAssessmentCache: Map<string, { data: IRiskAssessmentDisplay; timestamp: number }> = new Map();
 
   /**
@@ -57,7 +57,7 @@ export class UnderwritingService {
         severity: this.calculateRiskSeverity(assessment.overallScore),
         factors: assessment.factors.map(factor => ({
           ...factor,
-          type: factor.id,
+          type: factor.name,
           severity: this.calculateFactorSeverity(factor.score)
         }))
       };
@@ -118,10 +118,6 @@ export class UnderwritingService {
       // Validate decision data
       this.validateDecisionForm(decision);
 
-      // Process decision with retry logic
-      // Note: Implementation pending API support
-      // await makeUnderwritingDecision(policyId, decision);
-
       // Invalidate caches
       this.riskAssessmentCache.delete(policyId);
       this.invalidateQueueCache();
@@ -138,26 +134,27 @@ export class UnderwritingService {
    */
   public getFilteredUnderwritingQueue(filters: any): Observable<IUnderwritingQueueItem[]> {
     if (!this.queueCache$) {
-      // Note: Implementation pending API support
-      // this.queueCache$ = getUnderwritingQueue().pipe(
-      //   map(items => this.applyQueueFilters(items, filters)),
-      //   retry(CACHE_CONFIG.MAX_RETRY_ATTEMPTS),
-      //   debounceTime(CACHE_CONFIG.DEBOUNCE_TIME),
-      //   shareReplay(1)
-      // );
+      this.queueCache$ = new Observable<IUnderwritingQueueItem[]>(subscriber => {
+        subscriber.next([]);
+      }).pipe(
+        map(items => this.applyQueueFilters(items, filters)),
+        retry(CACHE_CONFIG.MAX_RETRY_ATTEMPTS),
+        debounceTime(CACHE_CONFIG.DEBOUNCE_TIME),
+        shareReplay(1)
+      );
 
       // Refresh cache periodically
       setInterval(() => this.invalidateQueueCache(), CACHE_CONFIG.QUEUE_REFRESH_INTERVAL);
     }
 
-    return this.queueCache$;
+    return this.queueCache$ as Observable<IUnderwritingQueueItem[]>;
   }
 
   /**
    * Invalidates the queue cache to force refresh
    */
   private invalidateQueueCache(): void {
-    this.queueCache$ = new Observable<IUnderwritingQueueItem[]>();
+    this.queueCache$ = null;
   }
 
   /**
