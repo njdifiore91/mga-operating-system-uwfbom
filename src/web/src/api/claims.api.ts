@@ -208,13 +208,14 @@ function handleClaimsApiError(error: AxiosError): Error {
     code?: string;
   }
 
+  const errorResponse = (error.response?.data || {}) as ErrorResponse;
   const baseError = new Error(
-    (error.response?.data as ErrorResponse)?.message || 'An error occurred while processing the claim'
+    errorResponse.message || 'An error occurred while processing the claim'
   );
   
   baseError.name = 'ClaimsApiError';
   (baseError as any).status = error.response?.status;
-  (baseError as any).code = (error.response?.data as ErrorResponse)?.code;
+  (baseError as any).code = errorResponse.code;
   
   return baseError;
 }
