@@ -28,6 +28,7 @@ interface AnalyticsDashboardProps {
   style?: React.CSSProperties;
   refreshInterval?: number;
   onError?: (error: Error) => void;
+  onDataUpdate?: (data: any) => void;
 }
 
 type CombinedMetrics = PolicyMetrics & UnderwritingMetrics & ComplianceMetrics;
@@ -36,7 +37,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   className,
   style,
   refreshInterval = 30000,
-  onError
+  onError,
+  onDataUpdate
 }) => {
   // Theme and responsive breakpoints
   const theme = useTheme();
@@ -70,12 +72,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           lastUpdated: new Date(),
           isRealTime: true
         }));
+        onDataUpdate?.(updatedMetrics);
       } catch (err) {
         console.error('Error processing WebSocket message:', err);
         onError?.(err as Error);
       }
     }
-  }, [lastMessage, onError]);
+  }, [lastMessage, onError, onDataUpdate]);
 
   // Initial data fetch and refresh interval
   useEffect(() => {
