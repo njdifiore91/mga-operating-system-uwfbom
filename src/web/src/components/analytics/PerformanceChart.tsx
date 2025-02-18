@@ -16,7 +16,6 @@ import {
 } from '../../types/analytics.types';
 import {
   fetchMetricsByCategory,
-  calculateMetricTrends,
   initializeWebSocket
 } from '../../services/analytics.service';
 
@@ -84,9 +83,9 @@ export const PerformanceChart: React.FC<ChartProps> = ({
   }), [chartConfig]);
 
   // Format data for chart rendering
-  const formatChartData = useCallback((rawData: any) => {
+  const formatChartData = useCallback((rawData: Record<string, any>) => {
     try {
-      return Object.entries(rawData).map(([timestamp, metrics]: [string, any]) => ({
+      return Object.entries(rawData).map(([timestamp, metrics]) => ({
         timestamp: format(new Date(timestamp), 'yyyy-MM-dd HH:mm'),
         ...metrics,
       }));
@@ -103,7 +102,7 @@ export const PerformanceChart: React.FC<ChartProps> = ({
       
       ws.onmessage = (event: MessageEvent) => {
         const newMetric = JSON.parse(event.data);
-        setData(prevData => [...prevData.slice(-99), formatChartData([newMetric])[0]]);
+        setData(prevData => [...prevData.slice(-99), formatChartData({ [Date.now()]: newMetric })[0]]);
       };
 
       ws.onerror = (error: Event) => {
@@ -189,9 +188,9 @@ export const PerformanceChart: React.FC<ChartProps> = ({
           {Object.keys(data[0] || {})
             .filter(key => key !== 'timestamp')
             .map((key, index) => {
-              const ChartElement = chartType === 'area' ? AreaChart : chartType === 'bar' ? BarChart : LineChart;
+              const Component = chartType === 'area' ? AreaChart : chartType === 'bar' ? BarChart : LineChart;
               return (
-                <ChartElement
+                <Component
                   key={key}
                   type="monotone"
                   dataKey={key}
