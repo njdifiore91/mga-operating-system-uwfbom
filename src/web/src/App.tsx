@@ -3,11 +3,15 @@ import { ThemeProvider, CssBaseline, createTheme } from '@mui/material'; // v5.1
 import { Provider } from 'react-redux'; // v8.1.0
 import { ErrorBoundary } from 'react-error-boundary'; // v4.0.11
 import { Workbox } from 'workbox-window'; // v7.0.0
+import { SecurityProvider } from '@mga/security'; // v1.0.0
+import { PerformanceMonitor } from '@mga/performance-monitoring'; // v1.0.0
+import { AccessibilityAnnouncer } from '@mga/accessibility'; // v1.0.0
 
 import AppRouter from './routes';
 import { defaultThemeConfig } from './config/theme.config';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import Notification from './components/common/Notification';
+import store from './store';
 
 /**
  * Root application component that initializes the MGA Operating System web interface
@@ -23,6 +27,19 @@ const App: React.FC = () => {
         console.error('Service worker registration failed:', error);
       });
     }
+
+    // Initialize performance monitoring
+    PerformanceMonitor.init({
+      sampleRate: 0.1,
+      reportingEndpoint: '/api/metrics',
+      vitalsThresholds: {
+        LCP: 2500,
+        FID: 100,
+        CLS: 0.1,
+        FCP: 1800,
+        TTFB: 800
+      }
+    });
   }, []);
 
   // Create theme with accessibility features
@@ -81,16 +98,32 @@ const App: React.FC = () => {
         window.location.href = '/';
       }}
     >
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <React.Suspense fallback={<LoadingSpinner fullScreen />}>
-          {/* Global notification system */}
-          <Notification />
+      <Provider store={store}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
           
-          {/* Main application router */}
-          <AppRouter />
-        </React.Suspense>
-      </ThemeProvider>
+          <SecurityProvider
+            config={{
+              authEndpoint: '/api/auth',
+              sessionTimeout: 3600000,
+              mfaRequired: true,
+              securityHeaders: true,
+              csrfProtection: true
+            }}
+          >
+            <React.Suspense fallback={<LoadingSpinner fullScreen />}>
+              {/* Accessibility announcer for screen readers */}
+              <AccessibilityAnnouncer />
+              
+              {/* Global notification system */}
+              <Notification />
+              
+              {/* Main application router */}
+              <AppRouter />
+            </React.Suspense>
+          </SecurityProvider>
+        </ThemeProvider>
+      </Provider>
     </ErrorBoundary>
   );
 };
