@@ -30,7 +30,7 @@ interface TimelineEvent {
   status: keyof typeof CLAIM_STATUS;
   description: string;
   metadata?: Record<string, unknown>;
-  icon: React.ComponentType<{ fontSize: string }>;
+  icon: React.ComponentType<{ fontSize: "small" }>;
 }
 
 const StyledTimeline = styled(Timeline)(({ theme }) => ({
@@ -86,8 +86,8 @@ const generateTimelineEvents = (claim: Claim): TimelineEvent[] => {
   });
 
   // Add status change events
-  if ('statusHistory' in claim && Array.isArray(claim.statusHistory)) {
-    claim.statusHistory.forEach((change: StatusChange, index: number) => {
+  if (claim.statusHistory) {
+    (claim.statusHistory as StatusChange[]).forEach((change: StatusChange, index: number) => {
       events.push({
         id: `status-${claim.id}-${index}`,
         date: change.date,
