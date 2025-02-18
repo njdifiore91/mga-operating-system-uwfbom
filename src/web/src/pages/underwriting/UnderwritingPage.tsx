@@ -30,7 +30,7 @@ const UnderwritingPage: React.FC = React.memo(() => {
 
   // Custom hooks
   const { apm } = useApm();
-  const analytics = Analytics.getInstance();
+  const analytics = Analytics();
   const {
     makeDecision,
     updateFilters
@@ -127,6 +127,7 @@ const UnderwritingPage: React.FC = React.memo(() => {
 
   return (
     <ErrorBoundary
+      onError={handleError}
       fallback={
         <Alert 
           severity="error"
