@@ -11,7 +11,7 @@ import {
 import { useAuditLogger } from '@mga-os/audit'; // v1.0.x
 import { SecurityWrapper } from '@mga-os/security'; // v1.0.x
 
-import { CLAIM_STATUS, CLAIM_STATUS_LABELS } from '../../constants/claims.constants';
+import { CLAIM_STATUS, CLAIM_STATUS_LABELS, CLAIM_STATUS_TRANSITIONS } from '../../constants/claims.constants';
 import ErrorBoundary from '../common/ErrorBoundary';
 
 /**
