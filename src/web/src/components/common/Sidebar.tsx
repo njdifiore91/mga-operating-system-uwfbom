@@ -1,11 +1,12 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Drawer,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
+  Divider,
   IconButton,
   useTheme,
   useMediaQuery,
@@ -20,6 +21,7 @@ import {
   Description,
   Assessment,
   Folder,
+  Menu,
   ExpandMore,
   ExpandLess
 } from '@mui/icons-material';
@@ -88,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isPermanent =
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const navigate = useNavigate();
-  const { authState } = useAuth();
+  const { user, isAuthenticated, roles } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   // Navigation items with role-based access control
@@ -158,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isPermanent =
   const filteredNavItems = useMemo(() => {
     const filterItems = (items: NavItem[]): NavItem[] => {
       return items.filter(item => {
-        const hasAccess = hasRequiredRole(item.requiredRoles, authState.user?.permissions || []);
+        const hasAccess = hasRequiredRole(item.requiredRoles, roles || []);
         if (item.children) {
           item.children = filterItems(item.children);
           return hasAccess && item.children.length > 0;
@@ -167,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isPermanent =
       });
     };
     return filterItems(navigationItems);
-  }, [navigationItems, authState.user]);
+  }, [navigationItems, roles]);
 
   // Handle navigation item click
   const handleNavClick = useCallback((path: string) => {
@@ -197,10 +199,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isPermanent =
         <React.Fragment key={item.path}>
           <Tooltip title={item.label} placement="right" arrow>
             <StyledListItem
+              button
+              active={isActive}
               onClick={() => hasChildren ? handleExpand(item.path) : handleNavClick(item.path)}
               sx={{ pl: theme.spacing(2 + level * 2) }}
               aria-label={item.ariaLabel}
-              active={isActive}
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={item.label} />
