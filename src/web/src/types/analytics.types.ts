@@ -7,65 +7,31 @@
 import { ID, Timestamp, DateRange } from './common.types';
 
 /**
- * Interface for metric definition configuration
- */
-export interface MetricDefinition {
-  key: string;
-  name: string;
-  description: string;
-  unit: string;
-  category: string;
-  aggregationType: 'sum' | 'average' | 'count';
-  thresholds?: MetricThreshold;
-}
-
-/**
- * Interface for anomaly detection configuration
- */
-export interface AnomalyConfig {
-  metricKey: string;
-  sensitivityLevel: 'low' | 'medium' | 'high';
-  deviationThreshold: number;
-  minDataPoints: number;
-  detectionMethod: 'zscore' | 'iqr' | 'percentile';
-}
-
-/**
- * Type for trend analysis period configuration
- */
-export type TrendPeriod = {
-  duration: number;
-  unit: 'hour' | 'day' | 'week' | 'month' | 'year';
-  comparisonOffset: number;
-};
-
-/**
  * Interface for policy-related metrics tracking
  */
 export interface PolicyMetrics {
   totalPolicies: number;
   activePolicies: number;
   totalPremium: number;
-  policyDistribution: Record<string, number>;
-  renewalRate: number;
+  policyDistribution: Record<string, number>; // Distribution by policy type/status
+  renewalRate: number; // Percentage of policies renewed
 }
 
 /**
  * Interface for tracking underwriting performance and automation metrics
  */
 export interface UnderwritingMetrics {
-  automationRate: number;
-  averageProcessingTime: number;
+  automationRate: number; // Percentage of automated underwriting decisions
+  averageProcessingTime: number; // Average time in minutes
   pendingReviews: number;
-  riskScoreDistribution: Record<string, number>;
-  historicalTrend: MetricTrend[];
+  riskScoreDistribution: Record<string, number>; // Distribution of risk scores
 }
 
 /**
  * Interface for tracking compliance and regulatory metrics
  */
 export interface ComplianceMetrics {
-  complianceRate: number;
+  complianceRate: number; // Overall compliance percentage
   openViolations: number;
   regulatoryFilings: number;
 }
@@ -77,7 +43,38 @@ export interface DashboardMetrics {
   policy: PolicyMetrics;
   underwriting: UnderwritingMetrics;
   compliance: ComplianceMetrics;
-  lastUpdated: Timestamp;
+}
+
+/**
+ * Interface for metric definition configuration
+ */
+export interface MetricDefinition {
+  key: string;
+  name: string;
+  description: string;
+  unit: string;
+  category: string;
+  aggregationType: 'sum' | 'average' | 'count' | 'last';
+  thresholds?: MetricThreshold;
+}
+
+/**
+ * Interface for anomaly detection configuration
+ */
+export interface AnomalyConfig {
+  enabled: boolean;
+  sensitivityLevel: 'low' | 'medium' | 'high';
+  baselinePeriod: number;
+  deviationThreshold: number;
+}
+
+/**
+ * Type for trend analysis period configuration
+ */
+export interface TrendPeriod {
+  duration: number;
+  unit: 'hour' | 'day' | 'week' | 'month' | 'year';
+  comparisonOffset: number;
 }
 
 /**
@@ -85,7 +82,7 @@ export interface DashboardMetrics {
  */
 export interface MetricTrend {
   value: number;
-  change: number;
+  change: number; // Percentage change from previous period
   trend: 'up' | 'down' | 'stable';
 }
 
@@ -115,7 +112,7 @@ export enum ReportFormat {
 export interface ReportOptions {
   dateRange: DateRange;
   format: ReportFormat;
-  metrics: string[];
+  metrics: string[]; // Array of metric keys to include
   includeTrends: boolean;
 }
 
@@ -141,8 +138,8 @@ export interface DashboardConfig {
   id: ID;
   name: string;
   metrics: string[];
-  refreshInterval: number;
-  layout: Record<string, unknown>;
+  refreshInterval: number; // in seconds
+  layout: Record<string, unknown>; // Dashboard widget layout configuration
   thresholds: MetricThreshold[];
 }
 
