@@ -232,6 +232,22 @@ export class PolicyService {
   }
 
   /**
+   * Validates policy data with OneShield integration
+   * @param policyData Policy data to validate
+   * @returns Promise resolving to validation result
+   */
+  static async validateWithOneShield(policyData: Partial<IPolicy>): Promise<boolean> {
+    try {
+      // TODO: Implement OneShield validation logic
+      // This is a placeholder implementation
+      return true;
+    } catch (error) {
+      console.error('OneShield validation error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Clears all policy-related caches
    * Useful when needing to force fresh data
    */
