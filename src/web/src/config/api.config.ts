@@ -13,7 +13,9 @@ import {
 } from '../constants/api.constants';
 import {
   createRequestInterceptor,
-  createResponseInterceptor
+  createResponseInterceptor,
+  handleApiError,
+  retryRequest
 } from '../utils/api.utils';
 
 // Circuit breaker configuration
@@ -62,13 +64,19 @@ function createApiClient(): AxiosInstance {
     responseType: 'json',
     // Request transformations
     transformRequest: [
-      (data) => {
+      (data, headers) => {
+        if (headers) {
+          // Add timestamp
+          headers['X-Request-Time'] = new Date().toISOString();
+        }
+        // Transform request data
         return JSON.stringify(data);
       }
     ],
     // Response transformations
     transformResponse: [
       (data) => {
+        // Parse response
         return typeof data === 'string' ? JSON.parse(data) : data;
       }
     ]
@@ -83,8 +91,8 @@ function createApiClient(): AxiosInstance {
   // Add performance monitoring
   apiClient.interceptors.request.use(
     (config) => {
-      const configWithMetadata = config as any;
-      configWithMetadata.metadata = { startTime: Date.now() };
+      const configWithMetadata = config;
+      (configWithMetadata as any).metadata = { startTime: Date.now() };
       return configWithMetadata;
     },
     (error) => Promise.reject(error)
@@ -92,8 +100,7 @@ function createApiClient(): AxiosInstance {
 
   apiClient.interceptors.response.use(
     (response) => {
-      const configWithMetadata = response.config as any;
-      const duration = Date.now() - (configWithMetadata.metadata?.startTime || 0);
+      const duration = Date.now() - ((response.config as any).metadata?.startTime || 0);
       response.headers['X-Response-Time'] = duration.toString();
       return response;
     },
