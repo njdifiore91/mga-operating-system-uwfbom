@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import axios, { AxiosInstance, AxiosError, AxiosResponse, AxiosHeaders, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig, InternalAxiosRequestConfig, AxiosHeaders } from 'axios';
 import {
   API_BASE_URL,
   API_HEADERS,
@@ -35,8 +35,7 @@ interface RetryConfig {
   error: AxiosError;
 }
 
-// Custom type for retry tracking
-interface RequestConfig extends InternalAxiosRequestConfig {
+interface RequestWithRetry extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
@@ -52,25 +51,21 @@ export function createRequestInterceptor(axiosInstance: AxiosInstance): number {
         // Get authentication tokens
         const tokens = await StorageUtils.getAuthTokens();
         if (tokens?.accessToken) {
+          config.headers = config.headers || {};
           config.headers.Authorization = `Bearer ${tokens.accessToken}`;
         }
 
+        // Create new headers instance
         const headers = new AxiosHeaders({
           ...API_HEADERS,
           'X-Correlation-ID': uuidv4(),
           'X-Request-Time': new Date().toISOString()
         });
 
-        if (config.headers.Authorization) {
-          headers.set('Authorization', config.headers.Authorization);
-        }
-
-        config.headers = headers;
-
         // Add rate limiting metadata
-        const endpoint = config.url?.split('/')[1] || 'DEFAULT';
-        const rateLimit = API_RATE_LIMITS[endpoint as keyof typeof API_RATE_LIMITS] || API_RATE_LIMITS.DEFAULT;
-        config.headers.set('X-Rate-Limit', rateLimit.toString());
+        const endpoint = (config.url?.split('/')[1] || 'DEFAULT') as keyof typeof API_RATE_LIMITS;
+        const rateLimit = API_RATE_LIMITS[endpoint] ?? API_RATE_LIMITS.DEFAULT;
+        headers.set('X-Rate-Limit', rateLimit.toString());
 
         // Validate request payload
         if (config.data) {
@@ -80,6 +75,7 @@ export function createRequestInterceptor(axiosInstance: AxiosInstance): number {
           }
         }
 
+        config.headers = headers;
         return config;
       } catch (error) {
         return Promise.reject(error);
@@ -110,10 +106,13 @@ export function createResponseInterceptor(axiosInstance: AxiosInstance): number 
       return processedResponse;
     },
     async (error: AxiosError) => {
-      const originalRequest = error.config as RequestConfig;
+      const originalRequest = error.config as RequestWithRetry | undefined;
+      if (!originalRequest) {
+        return Promise.reject(error);
+      }
 
       // Handle token refresh for 401 errors
-      if (error.response?.status === HTTP_STATUS.UNAUTHORIZED && originalRequest && !originalRequest._retry) {
+      if (error.response?.status === HTTP_STATUS.UNAUTHORIZED && !originalRequest._retry) {
         originalRequest._retry = true;
         const tokens = await StorageUtils.getAuthTokens();
         
@@ -124,7 +123,7 @@ export function createResponseInterceptor(axiosInstance: AxiosInstance): number 
             });
             
             if (response.data?.accessToken) {
-              return axiosInstance(originalRequest);
+              return axiosInstance(originalRequest as AxiosRequestConfig);
             }
           } catch (refreshError) {
             return Promise.reject(refreshError);
@@ -134,7 +133,6 @@ export function createResponseInterceptor(axiosInstance: AxiosInstance): number 
 
       // Handle retryable errors
       if (
-        originalRequest &&
         !originalRequest._retry &&
         RETRYABLE_STATUS_CODES.includes(error.response?.status || 0)
       ) {
@@ -152,7 +150,7 @@ export function createResponseInterceptor(axiosInstance: AxiosInstance): number 
  * @returns Standardized ApiError object
  */
 export function handleApiError(error: AxiosError): ApiError {
-  const correlationId = error.config?.headers?.['X-Correlation-ID'] || uuidv4();
+  const correlationId = error.config?.headers?.['X-Correlation-ID'] as string || uuidv4();
   
   const apiError: ApiError = {
     code: 'API_ERROR',
@@ -230,7 +228,7 @@ export async function retryRequest(
   // Wait for backoff delay
   await new Promise(resolve => setTimeout(resolve, retryConfig.delay));
 
-  // Update retry metadata
+  // Create new headers instance
   const headers = new AxiosHeaders({
     ...config.headers,
     'X-Retry-Count': retryConfig.attempt.toString(),
