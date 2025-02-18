@@ -49,6 +49,10 @@ export const fetchClaimsAsync = createAsyncThunk(
     try {
       const { filters = {}, pagination, forceSync = false } = params;
 
+      if (forceSync) {
+        await claimsService.syncWithOneShield();
+      }
+
       const response = await claimsService.fetchClaims(
         filters,
         pagination.page,
@@ -139,6 +143,21 @@ export const uploadClaimDocumentAsync = createAsyncThunk(
   }
 );
 
+/**
+ * Forces synchronization with OneShield system
+ */
+export const syncWithOneShieldAsync = createAsyncThunk(
+  `${ACTION_PREFIX}/syncOneShield`,
+  async (claimId: string, { rejectWithValue }) => {
+    try {
+      const response = await claimsService.syncWithOneShield(claimId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
 // Export action types for reducer consumption
 export type ClaimsActionTypes = {
   fetchClaims: typeof fetchClaimsAsync;
@@ -146,6 +165,7 @@ export type ClaimsActionTypes = {
   createClaim: typeof createClaimAsync;
   updateClaimStatus: typeof updateClaimStatusAsync;
   uploadClaimDocument: typeof uploadClaimDocumentAsync;
+  syncWithOneShield: typeof syncWithOneShieldAsync;
 };
 
 // Export thunk action creators
@@ -154,5 +174,6 @@ export const claimsActions = {
   fetchClaimDetails: fetchClaimDetailsAsync,
   createClaim: createClaimAsync,
   updateClaimStatus: updateClaimStatusAsync,
-  uploadClaimDocument: uploadClaimDocumentAsync
+  uploadClaimDocument: uploadClaimDocumentAsync,
+  syncWithOneShield: syncWithOneShieldAsync
 };
