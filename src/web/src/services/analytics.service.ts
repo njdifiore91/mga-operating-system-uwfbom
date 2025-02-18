@@ -139,6 +139,43 @@ export const validateMetricDefinition = (
 };
 
 /**
+ * Fetches metrics by category with caching and error handling
+ * @param category Metric category to fetch
+ * @param dateRange Optional date range for filtering
+ * @returns Promise resolving to category-specific metrics
+ */
+export const fetchMetricsByCategory = async (
+  category: string,
+  dateRange?: { startDate: string; endDate: string }
+): Promise<PolicyMetrics | UnderwritingMetrics | ComplianceMetrics> => {
+  return getMetricsByType(category, dateRange || { startDate: '', endDate: '' });
+};
+
+/**
+ * Initializes WebSocket connection for real-time metric updates
+ * @param onMessage Callback function for handling incoming messages
+ * @returns Cleanup function to close the connection
+ */
+export const initializeWebSocket = (
+  onMessage: (data: any) => void
+): () => void => {
+  const ws = new WebSocket(`${process.env.REACT_APP_WS_URL}/analytics`);
+  
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage(data);
+    } catch (error) {
+      console.error('WebSocket message parsing error:', error);
+    }
+  };
+
+  return () => {
+    ws.close();
+  };
+};
+
+/**
  * Calculates moving average for trend analysis
  * @param values Array of metric values
  * @param period Period for moving average calculation
