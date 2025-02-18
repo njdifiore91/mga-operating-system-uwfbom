@@ -10,7 +10,6 @@ import {
   createPolicy,
   updatePolicy,
   addPolicyEndorsement,
-  cancelPolicy
 } from '../api/policy.api';
 import {
   IPolicy,
@@ -32,35 +31,6 @@ const RETRY_DELAY = 1000;
  * Policy Service class implementing core policy management functionality
  */
 export class PolicyService {
-  /**
-   * Validates policy data with OneShield integration
-   * @param policyData Policy data to validate
-   * @returns Promise resolving to validation result
-   */
-  static async validateWithOneShield(policyData: Partial<IPolicy>): Promise<{ isValid: boolean; errors: string[] }> {
-    try {
-      // Call OneShield validation API
-      const response = await fetch(`${process.env.REACT_APP_ONESHIELD_API_URL}/validate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': process.env.REACT_APP_ONESHIELD_API_KEY || ''
-        },
-        body: JSON.stringify(policyData)
-      });
-
-      const result = await response.json();
-
-      return {
-        isValid: result.valid,
-        errors: result.errors || []
-      };
-    } catch (error) {
-      console.error('OneShield validation error:', error);
-      throw error;
-    }
-  }
-
   /**
    * Retrieves a paginated list of policies with optional filtering
    * @param filters Optional filters for policy search
@@ -257,53 +227,6 @@ export class PolicyService {
       return data;
     } catch (error) {
       console.error('Endorsement creation error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Binds an approved policy to make it active
-   * @param policyId Policy identifier
-   * @returns Promise resolving to bound policy
-   */
-  static async bindApprovedPolicy(policyId: string): Promise<IPolicy> {
-    try {
-      // Verify policy is in approved status
-      const currentPolicy = await PolicyService.fetchPolicyDetails(policyId);
-      if (currentPolicy.status !== PolicyStatus.APPROVED) {
-        throw new Error('Policy must be approved before binding');
-      }
-
-      // Optimistic cache update
-      policyCache.set(policyId, {
-        data: { ...currentPolicy, status: PolicyStatus.BOUND },
-        timestamp: Date.now()
-      });
-
-      const response = await updatePolicy(policyId, { status: PolicyStatus.BOUND });
-      const { data, success } = response.data;
-
-      if (!success || !data) {
-        // Revert cache on failure
-        policyCache.set(policyId, {
-          data: currentPolicy,
-          timestamp: Date.now()
-        });
-        throw new Error('Failed to bind policy');
-      }
-
-      // Update cache with confirmed data
-      policyCache.set(policyId, {
-        data,
-        timestamp: Date.now()
-      });
-
-      // Invalidate list cache
-      listCache.clear();
-
-      return data;
-    } catch (error) {
-      console.error('Policy binding error:', error);
       throw error;
     }
   }
