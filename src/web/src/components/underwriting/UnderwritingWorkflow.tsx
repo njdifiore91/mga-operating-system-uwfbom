@@ -147,8 +147,8 @@ export const UnderwritingWorkflow: React.FC<UnderwritingWorkflowProps> = ({
         case 1:
           // Initialize risk assessment
           await submitForUnderwriting({
-            policyId,
-            status: UnderwritingStatus.IN_REVIEW
+            status: UnderwritingStatus.IN_REVIEW,
+            policyId
           });
           break;
         case 3:
@@ -160,7 +160,10 @@ export const UnderwritingWorkflow: React.FC<UnderwritingWorkflowProps> = ({
         case 4:
           // Submit final decision
           if (decision.decision) {
-            await makeDecision(decision as IUnderwritingDecisionForm);
+            await makeDecision({
+              ...decision as IUnderwritingDecisionForm,
+              policyId
+            });
             onComplete?.(decision as IUnderwritingDecisionForm);
           }
           break;
