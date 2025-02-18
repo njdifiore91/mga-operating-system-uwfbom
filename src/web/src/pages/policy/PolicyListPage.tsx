@@ -84,7 +84,7 @@ const PolicyListPage: React.FC = React.memo(() => {
               color="inherit"
               size="small"
               onClick={handleRetry}
-              disabled={!!loading}
+              disabled={Boolean(loading)}
             >
               Retry
             </Button>
@@ -141,7 +141,7 @@ const PolicyListPage: React.FC = React.memo(() => {
             }}
             refreshInterval={30000}
           />
-          {loading && (
+          {Boolean(loading) && (
             <Box
               position="absolute"
               top={0}
