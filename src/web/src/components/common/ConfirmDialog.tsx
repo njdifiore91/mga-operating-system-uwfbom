@@ -53,10 +53,12 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = memo(({
   return (
     <Dialog
       open={open}
-      onClose={isLoading ? undefined : handleCancel}
+      onClose={handleCancel}
       aria-labelledby="confirm-dialog-title"
       aria-describedby="confirm-dialog-description"
+      // Prevent closing by clicking outside while loading
       disableEscapeKeyDown={isLoading}
+      onBackdropClick={isLoading ? undefined : handleCancel}
     >
       <DialogTitle id="confirm-dialog-title">
         {title}
