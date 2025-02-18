@@ -14,7 +14,8 @@ import {
   MFAVerification,
   PasswordReset,
   AuthResponse,
-  AuthState
+  AuthState,
+  UserRole
 } from '../types/auth.types';
 
 // Constants for session management
@@ -206,6 +207,7 @@ export function useAuth() {
   return {
     authState,
     user: authState.user,
+    roles: authState.user?.role ? [authState.user.role] : [],
     login: handleLogin,
     verifyMFA: handleMFAVerification,
     logout: handleLogout,
