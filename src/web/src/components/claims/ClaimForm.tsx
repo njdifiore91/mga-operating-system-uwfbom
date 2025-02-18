@@ -6,9 +6,11 @@ import {
   Grid,
   Alert,
   CircularProgress,
+  Text,
   Input,
   FormLabel,
-  Text
+  FormControl,
+  FormErrorMessage
 } from '@chakra-ui/react';
 import { Claim, ClaimLocation, ClaimantInfo } from '../../types/claims.types';
 import { useClaims } from '../../hooks/useClaims';
@@ -158,42 +160,46 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
             name="incidentDate"
             control={control}
             render={({ field }) => (
-              <DatePicker
-                label="Incident Date"
-                value={field.value.toISOString()}
-                onChange={field.onChange}
-                error={!!errors.incidentDate}
-                helperText={errors.incidentDate?.message}
-                validationRules={{
-                  allowPastDates: true,
-                  businessDaysOnly: false
-                }}
-                aria-label="Select incident date"
-              />
+              <FormControl isInvalid={!!errors.incidentDate}>
+                <FormLabel>Incident Date</FormLabel>
+                <DatePicker
+                  label="Incident Date"
+                  value={field.value.toISOString()}
+                  onChange={field.onChange}
+                  error={!!errors.incidentDate}
+                  helperText={errors.incidentDate?.message}
+                  validationRules={{
+                    allowPastDates: true,
+                    businessDaysOnly: false
+                  }}
+                  aria-label="Select incident date"
+                />
+                <FormErrorMessage>{errors.incidentDate?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
         <Grid gridColumn="span 12">
-          <FormLabel htmlFor="description">Incident Description</FormLabel>
           <Controller
             name="description"
             control={control}
             render={({ field }) => (
-              <Input
-                {...field}
-                as="textarea"
-                rows={4}
-                id="description"
-                isInvalid={!!errors.description}
-                maxLength={MAX_CLAIM_DESCRIPTION_LENGTH}
-                aria-label="Incident description"
-              />
+              <FormControl isInvalid={!!errors.description}>
+                <FormLabel>Incident Description</FormLabel>
+                <Input
+                  {...field}
+                  as="textarea"
+                  rows={4}
+                  maxLength={MAX_CLAIM_DESCRIPTION_LENGTH}
+                  aria-label="Incident description"
+                />
+                <FormErrorMessage>
+                  {`${field.value.length}/${MAX_CLAIM_DESCRIPTION_LENGTH} characters. ${errors.description?.message || ''}`}
+                </FormErrorMessage>
+              </FormControl>
             )}
           />
-          <Text fontSize="sm" color="gray.500">
-            {`${field.value?.length || 0}/${MAX_CLAIM_DESCRIPTION_LENGTH} characters. ${errors.description?.message || ''}`}
-          </Text>
         </Grid>
 
         {/* Location Information */}
@@ -203,10 +209,146 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
           </Text>
         </Grid>
 
-        {/* Rest of the form fields following the same pattern */}
-        {/* ... Location fields ... */}
-        {/* ... Claimant fields ... */}
-        {/* ... Document upload ... */}
+        <Grid gridColumn="span 12">
+          <Controller
+            name="location.address"
+            control={control}
+            render={({ field }) => (
+              <FormControl isInvalid={!!errors.location?.address}>
+                <FormLabel>Street Address</FormLabel>
+                <Input {...field} aria-label="Street address" />
+                <FormErrorMessage>{errors.location?.address?.message}</FormErrorMessage>
+              </FormControl>
+            )}
+          />
+        </Grid>
+
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
+          <Controller
+            name="location.city"
+            control={control}
+            render={({ field }) => (
+              <FormControl isInvalid={!!errors.location?.city}>
+                <FormLabel>City</FormLabel>
+                <Input {...field} aria-label="City" />
+                <FormErrorMessage>{errors.location?.city?.message}</FormErrorMessage>
+              </FormControl>
+            )}
+          />
+        </Grid>
+
+        <Grid gridColumn={{ base: "span 12", md: "span 3" }}>
+          <Controller
+            name="location.state"
+            control={control}
+            render={({ field }) => (
+              <FormControl isInvalid={!!errors.location?.state}>
+                <FormLabel>State</FormLabel>
+                <Input {...field} aria-label="State" />
+                <FormErrorMessage>{errors.location?.state?.message}</FormErrorMessage>
+              </FormControl>
+            )}
+          />
+        </Grid>
+
+        <Grid gridColumn={{ base: "span 12", md: "span 3" }}>
+          <Controller
+            name="location.zipCode"
+            control={control}
+            render={({ field }) => (
+              <FormControl isInvalid={!!errors.location?.zipCode}>
+                <FormLabel>ZIP Code</FormLabel>
+                <Input
+                  {...field}
+                  pattern="[0-9]{5}(-[0-9]{4})?"
+                  aria-label="ZIP code"
+                />
+                <FormErrorMessage>{errors.location?.zipCode?.message}</FormErrorMessage>
+              </FormControl>
+            )}
+          />
+        </Grid>
+
+        {/* Claimant Information */}
+        <Grid gridColumn="span 12">
+          <Text fontSize="xl" mb={3}>
+            Claimant Information
+          </Text>
+        </Grid>
+
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
+          <Controller
+            name="claimantInfo.firstName"
+            control={control}
+            render={({ field }) => (
+              <FormControl isInvalid={!!errors.claimantInfo?.firstName}>
+                <FormLabel>First Name</FormLabel>
+                <Input {...field} aria-label="First name" />
+                <FormErrorMessage>{errors.claimantInfo?.firstName?.message}</FormErrorMessage>
+              </FormControl>
+            )}
+          />
+        </Grid>
+
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
+          <Controller
+            name="claimantInfo.lastName"
+            control={control}
+            render={({ field }) => (
+              <FormControl isInvalid={!!errors.claimantInfo?.lastName}>
+                <FormLabel>Last Name</FormLabel>
+                <Input {...field} aria-label="Last name" />
+                <FormErrorMessage>{errors.claimantInfo?.lastName?.message}</FormErrorMessage>
+              </FormControl>
+            )}
+          />
+        </Grid>
+
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
+          <Controller
+            name="claimantInfo.email"
+            control={control}
+            render={({ field }) => (
+              <FormControl isInvalid={!!errors.claimantInfo?.email}>
+                <FormLabel>Email</FormLabel>
+                <Input {...field} type="email" aria-label="Email address" />
+                <FormErrorMessage>{errors.claimantInfo?.email?.message}</FormErrorMessage>
+              </FormControl>
+            )}
+          />
+        </Grid>
+
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
+          <Controller
+            name="claimantInfo.phone"
+            control={control}
+            render={({ field }) => (
+              <FormControl isInvalid={!!errors.claimantInfo?.phone}>
+                <FormLabel>Phone</FormLabel>
+                <Input
+                  {...field}
+                  pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                  aria-label="Phone number"
+                />
+                <FormErrorMessage>{errors.claimantInfo?.phone?.message}</FormErrorMessage>
+              </FormControl>
+            )}
+          />
+        </Grid>
+
+        {/* Document Upload */}
+        <Grid gridColumn="span 12">
+          <Text fontSize="xl" mb={3}>
+            Supporting Documents
+          </Text>
+          <FileUpload
+            acceptedTypes={Object.values(CLAIM_DOCUMENT_TYPES)}
+            onUpload={handleFileUpload}
+            multiple
+            label="Drop claim documents here or click to upload"
+            ariaLabel="Upload claim documents"
+          />
+        </Grid>
 
         {/* Error Display */}
         {uploadError && (
@@ -223,7 +365,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
             <Button
               variant="outline"
               onClick={onCancel}
-              isDisabled={isProcessing}
+              disabled={isProcessing}
               aria-label="Cancel claim submission"
             >
               Cancel
@@ -231,7 +373,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
             <Button
               type="submit"
               colorScheme="blue"
-              isDisabled={isProcessing}
+              disabled={isProcessing}
               leftIcon={isProcessing ? <CircularProgress size="sm" /> : undefined}
               aria-label="Submit claim"
             >
