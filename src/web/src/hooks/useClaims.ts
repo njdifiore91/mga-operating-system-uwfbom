@@ -177,7 +177,7 @@ export function useClaims(
       setIsLoading(true);
       setError(null);
       try {
-        const isValid = await claimsService.validateStatusTransition(claimId, data.status);
+        const isValid = operations.validateStatusTransition(data.status, data.status);
         if (!isValid) {
           throw new Error('Invalid status transition');
         }
