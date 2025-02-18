@@ -1,7 +1,7 @@
-import React, { StrictMode } from 'react'; // v18.2.0
+import { StrictMode } from 'react'; // v18.2.0
 import { createRoot } from 'react-dom/client'; // v18.2.0
 import { init as initSentry, BrowserTracing } from '@sentry/react'; // v7.x.x
-import { PerformanceMonitor } from '@performance-monitor/react'; // v1.x.x
+import { PerformanceMonitor } from '@mga/performance-monitoring'; // v1.x.x
 
 import App from './App';
 import ErrorBoundary from './components/common/ErrorBoundary';
