@@ -5,6 +5,13 @@ import LoginForm from '../../components/auth/LoginForm';
 import { useAuth } from '../../hooks/useAuth';
 import { AuthError } from '../../types/auth.types';
 
+// Define SecurityEvent type
+interface SecurityEvent {
+  type: 'SUSPICIOUS_ACTIVITY' | 'SESSION_EXPIRED' | 'AUTH_ERROR';
+  severity?: 'low' | 'medium' | 'high';
+  message?: string;
+}
+
 /**
  * Enhanced login page component implementing OAuth 2.0 authentication,
  * MFA verification, security monitoring, and WCAG 2.1 AA compliance
@@ -31,12 +38,8 @@ const LoginPage: React.FC = () => {
 
     // Monitor suspicious activities
     const securityMonitor = (event: Event) => {
-      if (event.type === 'securityEvent') {
-        handleSecurityEvent({
-          type: event.type,
-          severity: 'medium',
-          message: 'Security event detected'
-        });
+      if (event instanceof CustomEvent && 'detail' in event) {
+        handleSecurityEvent(event.detail as SecurityEvent);
       }
     };
 
@@ -62,7 +65,7 @@ const LoginPage: React.FC = () => {
         // Handle MFA flow
         navigate('/mfa', { 
           state: { 
-            sessionId: authState.user?.id 
+            sessionToken: authState.user?.id || ''
           }
         });
       }
@@ -79,7 +82,7 @@ const LoginPage: React.FC = () => {
   /**
    * Processes security events and triggers appropriate responses
    */
-  const handleSecurityEvent = useCallback((event: { type: string; severity: string; message: string }) => {
+  const handleSecurityEvent = useCallback((event: SecurityEvent) => {
     // Log security event
     console.warn('Security event detected:', event);
 
