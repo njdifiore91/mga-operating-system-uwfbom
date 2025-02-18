@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TextField, Button, Box, Typography, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { MFAVerification as MFAVerificationType } from '../../types/auth.types';
+import { MFAVerification as MFAVerificationType, SessionToken } from '../../types/auth.types';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 // Constants for MFA verification
@@ -11,7 +11,7 @@ const MAX_ATTEMPTS = 3;
 const DEBOUNCE_DELAY = 300;
 
 interface MFAVerificationProps {
-  sessionToken: string;
+  sessionToken: SessionToken;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
