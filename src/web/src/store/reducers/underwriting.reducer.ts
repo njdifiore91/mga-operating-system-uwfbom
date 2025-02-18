@@ -4,10 +4,10 @@
  * @version 1.0.0
  */
 
-import { createReducer } from '@reduxjs/toolkit';
+import { createReducer, createAsyncThunk } from '@reduxjs/toolkit';
 import {
   IRiskAssessmentDisplay,
-  IUnderwritingQueueItem,
+  IUnderwritingQueueItem
 } from '../../types/underwriting.types';
 import {
   fetchRiskAssessment,
@@ -81,12 +81,12 @@ const initialState: UnderwritingState = {
 export const underwritingReducer = createReducer(initialState, (builder) => {
   builder
     // Risk Assessment Actions
-    .addCase(fetchRiskAssessment.pending, (state) => {
+    .addCase(fetchRiskAssessment.pending.type, (state) => {
       state.loading = true;
       state.error = null;
       state.metadata.pendingOperations.push('FETCH_RISK_ASSESSMENT');
     })
-    .addCase(fetchRiskAssessment.fulfilled, (state, action) => {
+    .addCase(fetchRiskAssessment.fulfilled.type, (state, action) => {
       state.loading = false;
       state.riskAssessment = action.payload;
       state.error = null;
@@ -111,7 +111,7 @@ export const underwritingReducer = createReducer(initialState, (builder) => {
         pendingOperations: state.metadata.pendingOperations.filter(op => op !== 'FETCH_RISK_ASSESSMENT')
       };
     })
-    .addCase(fetchRiskAssessment.rejected, (state, action) => {
+    .addCase(fetchRiskAssessment.rejected.type, (state, action) => {
       state.loading = false;
       state.error = {
         message: action.error.message || 'Failed to fetch risk assessment',
@@ -124,12 +124,12 @@ export const underwritingReducer = createReducer(initialState, (builder) => {
     })
 
     // Underwriting Submission Actions
-    .addCase(submitUnderwritingRequest.pending, (state) => {
+    .addCase(submitUnderwritingRequest.pending.type, (state) => {
       state.loading = true;
       state.error = null;
       state.metadata.pendingOperations.push('SUBMIT_UNDERWRITING');
     })
-    .addCase(submitUnderwritingRequest.fulfilled, (state, action) => {
+    .addCase(submitUnderwritingRequest.fulfilled.type, (state, action) => {
       state.loading = false;
       state.riskAssessment = action.payload;
       
@@ -143,7 +143,7 @@ export const underwritingReducer = createReducer(initialState, (builder) => {
           .filter(op => op !== 'SUBMIT_UNDERWRITING')
       };
     })
-    .addCase(submitUnderwritingRequest.rejected, (state, action) => {
+    .addCase(submitUnderwritingRequest.rejected.type, (state, action) => {
       state.loading = false;
       state.error = {
         message: action.error.message || 'Failed to submit underwriting request',
@@ -154,11 +154,11 @@ export const underwritingReducer = createReducer(initialState, (builder) => {
     })
 
     // Queue Management Actions
-    .addCase(updateUnderwritingQueue.pending, (state) => {
+    .addCase(updateUnderwritingQueue.pending.type, (state) => {
       state.loading = true;
       state.metadata.pendingOperations.push('UPDATE_QUEUE');
     })
-    .addCase(updateUnderwritingQueue.fulfilled, (state, action) => {
+    .addCase(updateUnderwritingQueue.fulfilled.type, (state, action) => {
       state.loading = false;
       state.queueItems = action.payload;
       
@@ -176,7 +176,7 @@ export const underwritingReducer = createReducer(initialState, (builder) => {
           .filter(op => op !== 'UPDATE_QUEUE')
       };
     })
-    .addCase(updateUnderwritingQueue.rejected, (state, action) => {
+    .addCase(updateUnderwritingQueue.rejected.type, (state, action) => {
       state.loading = false;
       state.error = {
         message: action.error.message || 'Failed to update underwriting queue',
@@ -187,12 +187,12 @@ export const underwritingReducer = createReducer(initialState, (builder) => {
     })
 
     // Decision Processing Actions
-    .addCase(processUnderwritingDecision.pending, (state) => {
+    .addCase(processUnderwritingDecision.pending.type, (state) => {
       state.loading = true;
       state.error = null;
       state.metadata.pendingOperations.push('PROCESS_DECISION');
     })
-    .addCase(processUnderwritingDecision.fulfilled, (state, action) => {
+    .addCase(processUnderwritingDecision.fulfilled.type, (state, action) => {
       state.loading = false;
       
       // Invalidate affected caches
@@ -206,7 +206,7 @@ export const underwritingReducer = createReducer(initialState, (builder) => {
           .filter(op => op !== 'PROCESS_DECISION')
       };
     })
-    .addCase(processUnderwritingDecision.rejected, (state, action) => {
+    .addCase(processUnderwritingDecision.rejected.type, (state, action) => {
       state.loading = false;
       state.error = {
         message: action.error.message || 'Failed to process underwriting decision',
