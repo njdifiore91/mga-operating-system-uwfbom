@@ -47,7 +47,7 @@ const PolicyDetailsPage: React.FC = () => {
   });
 
   // Get current policy from policies array
-  const currentPolicy = policies?.find((policy: IPolicy) => policy.id === policyId);
+  const currentPolicy = policies.find((policy: IPolicy) => policy.id === policyId);
 
   // Fetch policy data on mount or policy ID change
   useEffect(() => {
