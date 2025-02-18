@@ -20,7 +20,7 @@ import { debounce } from 'lodash';
 import { IPolicy, PolicyType, PolicyStatus } from '../../types/policy.types';
 import { PolicyService } from '../../services/policy.service';
 import { validatePolicy } from '../../validators/policy.validator';
-import { POLICY_VALIDATION } from '../../constants/policy.constants';
+import { POLICY_VALIDATION, POLICY_TYPES } from '../../constants/policy.constants';
 
 // Form steps configuration
 const FORM_STEPS = [
@@ -139,7 +139,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({
               id="policy-type"
               aria-label="Policy Type"
             >
-              {Object.values(PolicyType).map(type => (
+              {Object.keys(POLICY_TYPES).map(type => (
                 <MenuItem key={type} value={type}>
                   {type.replace(/_/g, ' ')}
                 </MenuItem>
