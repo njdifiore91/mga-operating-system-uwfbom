@@ -16,12 +16,13 @@ import {
   ZoomOut as ZoomOutIcon,
   Print as PrintIcon
 } from '@mui/icons-material';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack';
 import { IDocument } from '../../types/documents.types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { DocumentService } from '../../services/documents.service';
 
 // Configure PDF.js worker
+import { pdfjs } from 'react-pdf';
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface DocumentPreviewProps {
@@ -64,7 +65,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     };
 
     validateAccess();
-  }, [document.id, userAccessLevel, onError, document.securityClassification]);
+  }, [document.id, userAccessLevel, onError]);
 
   // Document download handler
   const handleDownload = useCallback(async (event: React.MouseEvent) => {
@@ -84,11 +85,12 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       );
 
       // Create secure download link
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
+      const link = window.document.createElement('a');
+      link.href = url;
       link.download = document.fileName;
       link.click();
-      window.URL.revokeObjectURL(link.href);
+      window.URL.revokeObjectURL(url);
 
       setDownloadProgress(0);
     } catch (err) {
@@ -159,8 +161,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
         {document.fileType.includes('pdf') ? (
           <Document
-            file={`/api/documents/${document.id}/content`}
-            onLoadSuccess={(info: { numPages: number }) => setNumPages(info.numPages)}
+            onLoadSuccess={({ numPages: pages }) => setNumPages(pages)}
             loading={<LoadingSpinner size={40} color="primary" />}
             error={
               <Typography color="error">
@@ -169,7 +170,6 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             }
           >
             <Page
-              pageNumber={currentPage}
               scale={scale}
               renderTextLayer={false}
               renderAnnotationLayer={false}
