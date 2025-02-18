@@ -1,20 +1,3 @@
-error TS2305: Module '"@mui/x-data-grid"' has no exported member 'formatDate'.
-```
-
-2. The third error indicates unused variable:
-```
-error TS6133: 'theme' is declared but its value is never read.
-```
-
-3. The fourth error indicates unused variable:
-```
-error TS6133: 'updatePolicy' is declared but its value is never read.
-```
-
-I'll regenerate the file with fixes:
-
-# src/web/src/components/policy/PolicyDetails.tsx
-```typescript
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Card,
@@ -25,12 +8,12 @@ import {
   Divider,
   Skeleton,
   Box,
-  useTheme
 } from '@mui/material';
 import { IPolicy, PolicyType, PolicyStatus } from '../../types/policy.types';
 import PolicyService from '../../services/policy.service';
 import PolicyTimeline from './PolicyTimeline';
 import StatusBadge from '../common/StatusBadge';
+import { formatDate } from '../../utils/date.utils';
 
 // Interface for component props
 interface PolicyDetailsProps {
@@ -40,6 +23,14 @@ interface PolicyDetailsProps {
   refreshInterval?: number;
   showActions?: boolean;
 }
+
+// Utility function for currency formatting
+const formatCurrency = (amount: number, currency: string): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency
+  }).format(amount);
+};
 
 // Custom hook for managing policy details state
 const usePolicyDetails = (policyId: string, refreshInterval?: number) => {
@@ -79,7 +70,7 @@ const usePolicyDetails = (policyId: string, refreshInterval?: number) => {
     }
   }, [policyId]);
 
-  return { policy, loading, error, updatePolicy, refreshData: fetchPolicyDetails };
+  return { policy, loading, error, refreshData: fetchPolicyDetails };
 };
 
 /**
@@ -201,15 +192,15 @@ const PolicyDetails: React.FC<PolicyDetailsProps> = ({
               </Grid>
               <Grid item xs={6}>
                 <Typography color="textSecondary">Total Premium</Typography>
-                <Typography>${totalPremium.toLocaleString()}</Typography>
+                <Typography>{formatCurrency(totalPremium, 'USD')}</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography color="textSecondary">Effective Date</Typography>
-                <Typography>{new Date(policy.effectiveDate).toLocaleDateString()}</Typography>
+                <Typography>{formatDate(new Date(policy.effectiveDate))}</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography color="textSecondary">Expiration Date</Typography>
-                <Typography>{new Date(policy.expirationDate).toLocaleDateString()}</Typography>
+                <Typography>{formatDate(new Date(policy.expirationDate))}</Typography>
               </Grid>
             </Grid>
           </Grid>
@@ -225,11 +216,11 @@ const PolicyDetails: React.FC<PolicyDetailsProps> = ({
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
                     <Typography color="textSecondary">Limit</Typography>
-                    <Typography>${coverage.limit.toLocaleString()}</Typography>
+                    <Typography>{formatCurrency(coverage.limit, 'USD')}</Typography>
                   </Grid>
                   <Grid item xs={6}>
                     <Typography color="textSecondary">Premium</Typography>
-                    <Typography>${coverage.premium.toLocaleString()}</Typography>
+                    <Typography>{formatCurrency(coverage.premium, 'USD')}</Typography>
                   </Grid>
                 </Grid>
               </Box>
@@ -253,7 +244,7 @@ const PolicyDetails: React.FC<PolicyDetailsProps> = ({
               <Grid item xs={12} sm={6} md={3}>
                 <Typography color="textSecondary">Review Date</Typography>
                 <Typography>
-                  {new Date(policy.underwritingInfo.reviewDate).toLocaleDateString()}
+                  {formatDate(new Date(policy.underwritingInfo.reviewDate))}
                 </Typography>
               </Grid>
               <Grid item xs={12}>
