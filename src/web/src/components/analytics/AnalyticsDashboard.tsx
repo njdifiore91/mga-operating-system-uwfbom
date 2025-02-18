@@ -16,6 +16,7 @@ import {
   PolicyMetrics,
   UnderwritingMetrics,
   ComplianceMetrics,
+  MetricTrend
 } from '../../types/analytics.types';
 import { DateRange } from '../../types/common.types';
 
@@ -174,7 +175,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             title="Total Policies"
             value={metrics?.totalPolicies || 0}
             format="number"
-            trend={{ trend: 'up', change: 5.2, value: 5.2 }}
+            trend={{ trend: 'up', change: 5.2, value: metrics?.totalPolicies || 0 }}
             loading={loading}
           />
         </Grid>
@@ -183,7 +184,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             title="Total Premium"
             value={metrics?.totalPremium || 0}
             format="currency"
-            trend={{ trend: 'up', change: 12.8, value: 12.8 }}
+            trend={{ trend: 'up', change: 12.8, value: metrics?.totalPremium || 0 }}
             loading={loading}
           />
         </Grid>
@@ -194,7 +195,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             title="Automation Rate"
             value={metrics?.automationRate || 0}
             format="percentage"
-            trend={{ trend: 'up', change: 8.5, value: 8.5 }}
+            trend={{ trend: 'up', change: 8.5, value: metrics?.automationRate || 0 }}
             loading={loading}
           />
         </Grid>
@@ -203,7 +204,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             title="Pending Reviews"
             value={metrics?.pendingReviews || 0}
             format="number"
-            trend={{ trend: 'down', change: -15.3, value: -15.3 }}
+            trend={{ trend: 'down', change: -15.3, value: metrics?.pendingReviews || 0 }}
             loading={loading}
           />
         </Grid>
