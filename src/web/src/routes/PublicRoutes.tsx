@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from '@sentry/react'; // v7.x
 import LoginPage from '../pages/auth/LoginPage';
@@ -26,6 +26,22 @@ const RedirectIfAuthenticated: React.FC<{ children: React.ReactNode }> = ({ chil
  * @version 1.0.0
  */
 const PublicRoutes: React.FC = () => {
+  const { authState } = useAuth();
+
+  // Set up security monitoring
+  useEffect(() => {
+    // Monitor route changes for security
+    const handleRouteChange = () => {
+      // Update last activity timestamp
+      if (authState.status === 'authenticated') {
+        window.dispatchEvent(new CustomEvent('userActivity'));
+      }
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, [authState.status]);
+
   return (
     <ErrorBoundary
       fallback={({ error }) => (
