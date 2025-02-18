@@ -27,7 +27,7 @@ interface UsePoliciesOptions {
 /**
  * Enhanced custom hook for policy management with caching and pagination
  */
-export const usePolicies = (options: UsePoliciesOptions = {}) => {
+export function usePolicies(options: UsePoliciesOptions = {}) {
   const {
     autoFetch = true,
     page = 1,
@@ -59,7 +59,7 @@ export const usePolicies = (options: UsePoliciesOptions = {}) => {
   /**
    * Fetches policies with retry logic and caching
    */
-  const fetchPoliciesList = useCallback(
+  const fetchPoliciesWithRetry = useCallback(
     async (params?: { page?: number; limit?: number }) => {
       try {
         const currentTime = Date.now();
@@ -83,7 +83,7 @@ export const usePolicies = (options: UsePoliciesOptions = {}) => {
           setRetryCount((prev) => prev + 1);
           const delay = Math.pow(2, retryCount) * 1000;
           await new Promise((resolve) => setTimeout(resolve, delay));
-          return fetchPoliciesList(params);
+          return fetchPoliciesWithRetry(params);
         }
         throw error;
       }
@@ -97,10 +97,10 @@ export const usePolicies = (options: UsePoliciesOptions = {}) => {
   const createNewPolicy = useCallback(
     async (data: Omit<IPolicy, 'id'>) => {
       const response = await dispatch(createPolicy(data)).unwrap();
-      await fetchPoliciesList(); // Refresh list after creation
+      await fetchPoliciesWithRetry(); // Refresh list after creation
       return response;
     },
-    [dispatch, fetchPoliciesList]
+    [dispatch, fetchPoliciesWithRetry]
   );
 
   /**
@@ -111,10 +111,10 @@ export const usePolicies = (options: UsePoliciesOptions = {}) => {
       const response = await dispatch(
         updatePolicy({ policyId: id, updates: data })
       ).unwrap();
-      await fetchPoliciesList(); // Refresh list after update
+      await fetchPoliciesWithRetry(); // Refresh list after update
       return response;
     },
-    [dispatch, fetchPoliciesList]
+    [dispatch, fetchPoliciesWithRetry]
   );
 
   /**
@@ -123,24 +123,10 @@ export const usePolicies = (options: UsePoliciesOptions = {}) => {
   const bindExistingPolicy = useCallback(
     async (id: string) => {
       const response = await dispatch(bindPolicy(id)).unwrap();
-      await fetchPoliciesList(); // Refresh list after binding
+      await fetchPoliciesWithRetry(); // Refresh list after binding
       return response;
     },
-    [dispatch, fetchPoliciesList]
-  );
-
-  /**
-   * Adds an endorsement to a policy
-   */
-  const addEndorsement = useCallback(
-    async (policyId: string, data: Omit<IEndorsement, 'id'>) => {
-      const response = await dispatch(
-        updatePolicy({ policyId, updates: { endorsements: data } })
-      ).unwrap();
-      await fetchPoliciesList(); // Refresh list after endorsement
-      return response;
-    },
-    [dispatch, fetchPoliciesList]
+    [dispatch, fetchPoliciesWithRetry]
   );
 
   /**
@@ -148,8 +134,8 @@ export const usePolicies = (options: UsePoliciesOptions = {}) => {
    */
   const refreshPolicies = useCallback(async () => {
     setLastFetchTime(0); // Reset cache
-    return fetchPoliciesList();
-  }, [fetchPoliciesList]);
+    return fetchPoliciesWithRetry();
+  }, [fetchPoliciesWithRetry]);
 
   /**
    * Clears the policy cache
@@ -161,28 +147,23 @@ export const usePolicies = (options: UsePoliciesOptions = {}) => {
   // Auto-fetch effect
   useEffect(() => {
     if (autoFetch) {
-      fetchPoliciesList();
+      fetchPoliciesWithRetry();
     }
-  }, [autoFetch, fetchPoliciesList, page, limit, status, type]);
+  }, [autoFetch, fetchPoliciesWithRetry, page, limit, status, type]);
 
   return {
     // Data
     policies,
     loading,
     error,
-    totalPolicies: pagination.total,
-    currentPage: pagination.currentPage,
-    totalPages: pagination.totalPages,
-    hasNextPage: pagination.currentPage < pagination.totalPages,
-    hasPreviousPage: pagination.currentPage > 1,
+    pagination,
 
     // Actions
-    fetchPolicies: fetchPoliciesList,
+    fetchPolicies: fetchPoliciesWithRetry,
     createPolicy: createNewPolicy,
     updatePolicy: updateExistingPolicy,
     bindPolicy: bindExistingPolicy,
-    addEndorsement,
     refreshPolicies,
     clearCache,
   };
-};
+}
