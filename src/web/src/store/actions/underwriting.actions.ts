@@ -236,7 +236,7 @@ export const updateUnderwritingQueue = (
         dispatch(updateQueueStart());
 
         const queue = await underwritingService.getFilteredUnderwritingQueue(filters)
-          .toPromise() as IUnderwritingQueueItem[];
+          .toPromise() || [];
 
         dispatch(updateQueueSuccess(queue));
         span.setStatus({ code: SpanStatusCode.OK });
