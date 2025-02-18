@@ -70,9 +70,8 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
   // Memoized column definitions with custom renderers
   const columns = useMemo(() => [
     {
-      ...UNDERWRITING_QUEUE_COLUMNS.POLICY_ID,
       field: 'policyId',
-      type: 'string',
+      ...UNDERWRITING_QUEUE_COLUMNS.POLICY_ID,
       renderCell: (params: { row: IUnderwritingQueueItem }) => (
         <Button
           variant="text"
@@ -84,9 +83,8 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
       )
     },
     {
-      ...UNDERWRITING_QUEUE_COLUMNS.STATUS,
       field: 'status',
-      type: 'string',
+      ...UNDERWRITING_QUEUE_COLUMNS.STATUS,
       renderCell: (params: { row: IUnderwritingQueueItem }) => (
         <Chip
           label={params.row.status}
@@ -96,9 +94,8 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
       )
     },
     {
-      ...UNDERWRITING_QUEUE_COLUMNS.RISK_SCORE,
       field: 'riskScore',
-      type: 'number',
+      ...UNDERWRITING_QUEUE_COLUMNS.RISK_SCORE,
       renderCell: (params: { row: IUnderwritingQueueItem }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <CircularProgress
@@ -119,9 +116,8 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
       )
     },
     {
-      ...UNDERWRITING_QUEUE_COLUMNS.SEVERITY,
       field: 'severity',
-      type: 'string',
+      ...UNDERWRITING_QUEUE_COLUMNS.SEVERITY,
       renderCell: (params: { row: IUnderwritingQueueItem }) => (
         <Tooltip title={RISK_SEVERITY[params.row.severity].label}>
           <Chip
@@ -136,19 +132,16 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
       )
     },
     {
-      ...UNDERWRITING_QUEUE_COLUMNS.POLICY_TYPE,
       field: 'policyType',
-      type: 'string'
+      ...UNDERWRITING_QUEUE_COLUMNS.POLICY_TYPE
     },
     {
-      ...UNDERWRITING_QUEUE_COLUMNS.SUBMISSION_DATE,
       field: 'submissionDate',
-      type: 'date'
+      ...UNDERWRITING_QUEUE_COLUMNS.SUBMISSION_DATE
     },
     {
-      ...UNDERWRITING_QUEUE_COLUMNS.ASSIGNED_TO,
       field: 'assignedTo',
-      type: 'string'
+      ...UNDERWRITING_QUEUE_COLUMNS.ASSIGNED_TO
     }
   ], [onPolicySelect]);
 
@@ -173,10 +166,10 @@ const UnderwritingQueue: React.FC<UnderwritingQueueProps> = ({
         loading={isLoading}
         totalRows={queue?.totalCount || 0}
         paginationParams={{
-          page: pagination.cursor?.page || 0,
+          page: 0,
           limit: batchSize,
-          sortBy: '',
-          sortOrder: 'asc'
+          sortBy: 'submissionDate',
+          sortOrder: 'desc'
         }}
         onPaginationChange={pagination.handlePagination}
         onFilterChange={handleFilterChange}
