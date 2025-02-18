@@ -9,7 +9,7 @@ import { z } from 'zod'; // v3.21.4
 import dayjs from 'dayjs'; // v1.11.9
 import { IPolicy, PolicyStatus, PolicyType } from '../types/policy.types';
 import { POLICY_VALIDATION } from '../constants/policy.constants';
-import * as validationUtils from '../utils/validation.utils';
+import * as validation from '../utils/validation.utils';
 import type { ValidationResult } from '../types/common.types';
 
 // Zod schema for policy validation
@@ -60,7 +60,7 @@ export const validatePolicy = (policy: IPolicy): ValidationResult => {
   }
 
   // Validate premium
-  const premiumValidation = validationUtils.validateCurrency(policy.premium, {
+  const premiumValidation = validation.validateCurrency(policy.premium, {
     minAmount: POLICY_VALIDATION.MIN_PREMIUM,
     maxAmount: POLICY_VALIDATION.MAX_PREMIUM,
     currency: POLICY_VALIDATION.PREMIUM_CURRENCY
@@ -72,14 +72,14 @@ export const validatePolicy = (policy: IPolicy): ValidationResult => {
   // Validate coverages
   const coverageValidation = validatePolicyCoverages(policy.coverages);
   if (!coverageValidation.isValid) {
-    errors.coverages = Object.values(coverageValidation.errors).flat() as string[];
+    errors.coverages = coverageValidation.errors.coverages || [];
   }
 
   // Validate underwriting info for non-DRAFT policies
   if (policy.status !== PolicyStatus.DRAFT) {
     const underwritingValidation = validateUnderwritingInfo(policy.underwritingInfo);
     if (!underwritingValidation.isValid) {
-      errors.underwriting = Object.values(underwritingValidation.errors).flat() as string[];
+      errors.underwriting = underwritingValidation.errors.underwriting || [];
     }
   }
 
@@ -108,7 +108,7 @@ export const validatePolicyDates = (
   }
 
   // Validate date range
-  const dateRangeValidation = validationUtils.validateDateRange(
+  const dateRangeValidation = validation.validateDateRange(
     effectiveDate,
     expirationDate,
     {
@@ -157,22 +157,22 @@ export const validatePolicyCoverages = (
     }
 
     // Validate coverage limits
-    const limitValidation = validationUtils.validateCurrency(coverage.limit, {
+    const limitValidation = validation.validateCurrency(coverage.limit, {
       minAmount: POLICY_VALIDATION.MIN_COVERAGE_AMOUNT,
       maxAmount: POLICY_VALIDATION.MAX_COVERAGE_AMOUNT,
       currency: POLICY_VALIDATION.PREMIUM_CURRENCY
     });
     if (!limitValidation.isValid) {
-      errors.push(`Coverage ${index + 1}: ${Object.values(limitValidation.errors).flat().join(', ')}`);
+      errors.push(`Coverage ${index + 1}: ${limitValidation.errors.amount?.join(', ') || ''}`);
     }
 
     // Validate coverage premium
-    const premiumValidation = validationUtils.validateCurrency(coverage.premium, {
+    const premiumValidation = validation.validateCurrency(coverage.premium, {
       minAmount: 0,
       currency: POLICY_VALIDATION.PREMIUM_CURRENCY
     });
     if (!premiumValidation.isValid) {
-      errors.push(`Coverage ${index + 1}: ${Object.values(premiumValidation.errors).flat().join(', ')}`);
+      errors.push(`Coverage ${index + 1}: ${premiumValidation.errors.amount?.join(', ') || ''}`);
     }
   });
 
