@@ -66,16 +66,14 @@ class ClaimsService {
   }
 
   /**
-   * Submits a new claim with validation
+   * Submits a new claim with validation and OneShield synchronization
    */
   async submitClaim(claimData: CreateClaimRequest): Promise<Claim> {
     this.validateClaimData(claimData);
     
-    const claim = await claimsApi.createClaim({
-      ...claimData,
-      initialReserve: this.formatCurrency(claimData.initialReserve)
-    });
+    const claim = await claimsApi.createClaim(claimData);
     
+    // OneShield sync is handled on the API side
     this.invalidateCache();
     return this.processClaim(claim);
   }
@@ -88,7 +86,10 @@ class ClaimsService {
     updateData: UpdateClaimStatusRequest
   ): Promise<Claim> {
     const currentClaim = await claimsApi.getClaimById(claimId);
-    this.validateStatusTransition(currentClaim.status, updateData.status);
+    this.validateStatusTransition(
+      currentClaim.status as CLAIM_STATUS,
+      updateData.status as CLAIM_STATUS
+    );
 
     const updatedClaim = await claimsApi.updateClaimStatus(claimId, updateData);
     this.invalidateCache();
@@ -187,10 +188,6 @@ class ClaimsService {
     if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
       throw new Error('File type not supported');
     }
-  }
-
-  private formatCurrency(amount: number): number {
-    return Math.round(amount * 100) / 100;
   }
 
   private generateCacheKey(
