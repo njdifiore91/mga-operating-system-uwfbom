@@ -18,7 +18,8 @@ import RiskScoreWidget from '../analytics/RiskScoreWidget';
 import { useUnderwriting } from '../../hooks/useUnderwriting';
 import StatusBadge from '../common/StatusBadge';
 import { 
-  RISK_SEVERITY
+  RISK_SEVERITY,
+  UNDERWRITING_QUEUE_COLUMNS 
 } from '../../constants/underwriting.constants';
 import { UnderwritingStatus } from '../../types/underwriting.types';
 
@@ -255,7 +256,7 @@ const UnderwritingDashboard: React.FC = React.memo(() => {
               rowCount={queue?.totalCount || 0}
               page={pagination.cursor?.page || 0}
               pageSize={10}
-              onPageChange={(newPage: number) => pagination.handlePagination({ page: newPage })}
+              onPageChange={(page: number) => pagination.handlePagination({ page })}
               autoHeight
               sx={{
                 '& .MuiDataGrid-cell:focus': {
