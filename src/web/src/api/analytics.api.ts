@@ -166,3 +166,30 @@ export async function exportAnalyticsData(reportOptions: ReportOptions): Promise
     throw new Error(`Export API Error: ${axiosError.message}`);
   }
 }
+
+/**
+ * Subscribes to real-time metric updates using WebSocket connection
+ * @param metricKey Unique identifier for the metric to subscribe to
+ * @param callback Function to handle incoming metric updates
+ * @returns Function to unsubscribe from updates
+ */
+export function subscribeToMetricUpdates(
+  metricKey: string,
+  callback: (data: any) => void
+): () => void {
+  const wsEndpoint = `${API_ENDPOINTS.ANALYTICS.BASE}/ws/metrics/${metricKey}`;
+  const ws = new WebSocket(wsEndpoint);
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      callback(data);
+    } catch (error) {
+      console.error('Failed to process metric update:', error);
+    }
+  };
+
+  return () => {
+    ws.close();
+  };
+}
