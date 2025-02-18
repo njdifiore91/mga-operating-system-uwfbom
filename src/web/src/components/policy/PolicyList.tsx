@@ -135,7 +135,7 @@ const PolicyList: React.FC<PolicyListProps> = memo(({
     setPage(params.page);
   }, []);
 
-  // Handle row selection
+  // Handle row click
   const handleRowClick = useCallback((params: { row: IPolicy }) => {
     if (onPolicySelect) {
       onPolicySelect(params.row);
