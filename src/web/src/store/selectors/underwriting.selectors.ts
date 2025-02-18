@@ -9,9 +9,10 @@ import { createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../reducers';
 import type {
   IRiskAssessmentDisplay,
-  UnderwritingStatus,
+  RiskSeverity,
+  UnderwritingStatus
 } from '../../types/underwriting.types';
-import { RiskSeverity } from '../../types/underwriting.types';
+import { RiskSeverity as RiskSeverityEnum } from '../../constants/underwriting.constants';
 
 /**
  * Base selector for accessing the underwriting slice of state
@@ -37,7 +38,7 @@ export const selectUnderwritingQueue = createSelector(
     // Apply filters if present
     let filteredItems = queueItems;
     if (filters) {
-      filteredItems = queueItems.filter((item: { status: string; severity: string; riskScore: number }) => {
+      filteredItems = queueItems.filter((item: { status: UnderwritingStatus; severity: RiskSeverity; riskScore: number }) => {
         if (filters.status && item.status !== filters.status) return false;
         if (filters.severity && item.severity !== filters.severity) return false;
         if (filters.minScore && item.riskScore < filters.minScore) return false;
@@ -124,7 +125,7 @@ export const selectSelectedAssessment = createSelector(
     // Ensure all required fields are present
     return {
       ...riskAssessment,
-      factors: riskAssessment.factors.map((factor: { severity: any; score: number }) => ({
+      factors: riskAssessment.factors.map((factor: { severity?: RiskSeverity; score: number }) => ({
         ...factor,
         severity: factor.severity || calculateFactorSeverity(factor.score)
       }))
@@ -164,9 +165,9 @@ export const selectQueuePerformance = createSelector(
 
 // Helper function for calculating factor severity
 const calculateFactorSeverity = (score: number): RiskSeverity => {
-  if (score <= 0.3) return RiskSeverity.LOW;
-  if (score <= 0.7) return RiskSeverity.MEDIUM;
-  return RiskSeverity.HIGH;
+  if (score <= 0.3) return RiskSeverityEnum.LOW;
+  if (score <= 0.7) return RiskSeverityEnum.MEDIUM;
+  return RiskSeverityEnum.HIGH;
 };
 
 // Type definitions for computed metrics
