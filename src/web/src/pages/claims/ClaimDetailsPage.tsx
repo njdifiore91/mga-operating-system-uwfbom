@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -9,9 +9,9 @@ import {
   Typography,
   Button
 } from '@mui/material'; // v5.14.x
-import { ErrorBoundary } from '../../components/common/ErrorBoundary';
-import { PageHeader } from '../../components/common/PageHeader';
-import { ClaimDetails } from '../../components/claims/ClaimDetails';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
+import PageHeader from '../../components/common/PageHeader';
+import ClaimDetails from '../../components/claims/ClaimDetails';
 import { useClaims } from '../../hooks/useClaims';
 import { CLAIM_STATUS } from '../../constants/claims.constants';
 import { useNotification } from '../../hooks/useNotification';
@@ -33,7 +33,6 @@ interface SyncStatus {
 const ClaimDetailsPage: React.FC = () => {
   // Hooks initialization
   const { claimId } = useParams<{ claimId: string }>();
-  const navigate = useNavigate();
   const { showNotification } = useNotification();
   
   // Claims management hook with real-time sync
@@ -216,7 +215,7 @@ const ClaimDetailsPage: React.FC = () => {
           <ClaimDetails
             claimId={claimId!}
             onStatusChange={handleStatusChange}
-            onError={(error) => {
+            onError={(error: Error) => {
               showNotification({
                 message: error.message,
                 severity: 'error',

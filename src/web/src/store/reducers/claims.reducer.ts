@@ -5,15 +5,16 @@
  */
 
 import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
-import { Claim, ClaimFilters, PaginationState } from '../../types/claims.types';
-import { CLAIM_STATUS } from '../../constants/claims.constants';
+import { Claim } from '../../types/claims.types';
 import {
   fetchClaimsAsync,
   fetchClaimDetailsAsync,
   createClaimAsync,
   updateClaimStatusAsync,
   uploadClaimDocumentAsync,
-  syncWithOneShieldAsync
+  syncWithOneShieldAsync,
+  ClaimFilters,
+  PaginationState
 } from '../actions/claims.actions';
 
 // Cache entry type for memoization
@@ -152,7 +153,7 @@ const claimsSlice = createSlice({
     });
 
     // Create claim handling with optimistic updates
-    builder.addCase(createClaimAsync.pending, (state, action) => {
+    builder.addCase(createClaimAsync.pending, (state) => {
       state.loading = true;
       state.error = null;
     });
@@ -208,7 +209,7 @@ const claimsSlice = createSlice({
     });
     builder.addCase(uploadClaimDocumentAsync.fulfilled, (state, action) => {
       const { claimId } = action.meta.arg;
-      const updatedClaim = action.payload;
+      const updatedClaim = action.payload as Claim;
       state.claims = state.claims.map(claim =>
         claim.id === claimId ? updatedClaim : claim
       );
@@ -280,7 +281,7 @@ export const selectFilteredClaims = createSelector(
 );
 
 export const selectClaimById = createSelector(
-  [selectClaimsState, (state, claimId: string) => claimId],
+  [selectClaimsState, (_state, claimId: string) => claimId],
   (claimsState, claimId) => {
     const cacheKey = `claim_${claimId}`;
     const cachedClaim = claimsState.cache[cacheKey];

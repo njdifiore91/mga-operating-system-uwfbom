@@ -54,7 +54,7 @@ const PasswordReset: React.FC = () => {
       try {
         setLoading(true);
         const authService = new AuthService();
-        const isValid = await authService.validateToken(token);
+        const isValid = await authService.validateToken(token as unknown as ResetToken);
         setTokenValid(isValid);
         if (!isValid) {
           setError({ code: 'EXPIRED_TOKEN', message: 'Password reset token has expired' });
@@ -100,9 +100,9 @@ const PasswordReset: React.FC = () => {
       }
 
       const resetData: PasswordResetType = {
-        token: token as string,
-        newPassword: data.newPassword,
-        confirmPassword: data.confirmPassword
+        token: token as unknown as ResetToken,
+        newPassword: data.newPassword as unknown as Password,
+        confirmPassword: data.confirmPassword as unknown as Password
       };
 
       const authService = new AuthService();

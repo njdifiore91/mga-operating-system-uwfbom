@@ -7,8 +7,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { IPolicy, PolicyType, PolicyStatus, IEndorsement } from '../types/policy.types';
-import { policyActions } from '../store/actions/policy.actions';
-import { policySelectors } from '../store/selectors/policy.selectors';
+import { fetchPolicies, createPolicy, updatePolicy, bindPolicy } from '../store/actions/policy.actions';
+import { selectPolicies, selectPolicyLoading, selectPolicyError, selectPolicyPagination } from '../store/selectors/policy.selectors';
 
 // Cache configuration
 const DEFAULT_CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -39,10 +39,10 @@ export function usePolicies(options: UsePoliciesOptions = {}) {
   } = options;
 
   const dispatch = useDispatch();
-  const policies = useSelector(policySelectors.selectPolicies);
-  const loading = useSelector(policySelectors.selectPolicyLoading);
-  const error = useSelector(policySelectors.selectPolicyError);
-  const pagination = useSelector(policySelectors.selectPolicyPagination);
+  const policies = useSelector(selectPolicies);
+  const loading = useSelector(selectPolicyLoading);
+  const error = useSelector(selectPolicyError);
+  const pagination = useSelector(selectPolicyPagination);
 
   // Local state for request tracking
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
@@ -59,7 +59,7 @@ export function usePolicies(options: UsePoliciesOptions = {}) {
   /**
    * Fetches policies with retry logic and caching
    */
-  const fetchPolicies = useCallback(
+  const fetchPoliciesWithRetry = useCallback(
     async (params?: { page?: number; limit?: number }) => {
       try {
         const currentTime = Date.now();
@@ -68,7 +68,7 @@ export function usePolicies(options: UsePoliciesOptions = {}) {
         }
 
         const response = await dispatch(
-          policyActions.fetchPolicies({
+          fetchPolicies({
             filters,
             page: params?.page || page,
             limit: params?.limit || limit,
@@ -83,7 +83,7 @@ export function usePolicies(options: UsePoliciesOptions = {}) {
           setRetryCount((prev) => prev + 1);
           const delay = Math.pow(2, retryCount) * 1000;
           await new Promise((resolve) => setTimeout(resolve, delay));
-          return fetchPolicies(params);
+          return fetchPoliciesWithRetry(params);
         }
         throw error;
       }
@@ -94,53 +94,39 @@ export function usePolicies(options: UsePoliciesOptions = {}) {
   /**
    * Creates a new policy with optimistic updates
    */
-  const createPolicy = useCallback(
+  const createNewPolicy = useCallback(
     async (data: Omit<IPolicy, 'id'>) => {
-      const response = await dispatch(policyActions.createPolicy(data)).unwrap();
-      await fetchPolicies(); // Refresh list after creation
+      const response = await dispatch(createPolicy(data)).unwrap();
+      await fetchPoliciesWithRetry(); // Refresh list after creation
       return response;
     },
-    [dispatch, fetchPolicies]
+    [dispatch, fetchPoliciesWithRetry]
   );
 
   /**
    * Updates an existing policy
    */
-  const updatePolicy = useCallback(
+  const updateExistingPolicy = useCallback(
     async (id: string, data: Partial<IPolicy>) => {
       const response = await dispatch(
-        policyActions.updatePolicy({ policyId: id, updates: data })
+        updatePolicy({ policyId: id, updates: data })
       ).unwrap();
-      await fetchPolicies(); // Refresh list after update
+      await fetchPoliciesWithRetry(); // Refresh list after update
       return response;
     },
-    [dispatch, fetchPolicies]
+    [dispatch, fetchPoliciesWithRetry]
   );
 
   /**
    * Binds an approved policy
    */
-  const bindPolicy = useCallback(
+  const bindExistingPolicy = useCallback(
     async (id: string) => {
-      const response = await dispatch(policyActions.bindPolicy(id)).unwrap();
-      await fetchPolicies(); // Refresh list after binding
+      const response = await dispatch(bindPolicy(id)).unwrap();
+      await fetchPoliciesWithRetry(); // Refresh list after binding
       return response;
     },
-    [dispatch, fetchPolicies]
-  );
-
-  /**
-   * Adds an endorsement to a policy
-   */
-  const addEndorsement = useCallback(
-    async (policyId: string, data: Omit<IEndorsement, 'id'>) => {
-      const response = await dispatch(
-        policyActions.addEndorsement({ policyId, endorsement: data })
-      ).unwrap();
-      await fetchPolicies(); // Refresh list after endorsement
-      return response;
-    },
-    [dispatch, fetchPolicies]
+    [dispatch, fetchPoliciesWithRetry]
   );
 
   /**
@@ -148,8 +134,8 @@ export function usePolicies(options: UsePoliciesOptions = {}) {
    */
   const refreshPolicies = useCallback(async () => {
     setLastFetchTime(0); // Reset cache
-    return fetchPolicies();
-  }, [fetchPolicies]);
+    return fetchPoliciesWithRetry();
+  }, [fetchPoliciesWithRetry]);
 
   /**
    * Clears the policy cache
@@ -161,37 +147,22 @@ export function usePolicies(options: UsePoliciesOptions = {}) {
   // Auto-fetch effect
   useEffect(() => {
     if (autoFetch) {
-      fetchPolicies();
+      fetchPoliciesWithRetry();
     }
-  }, [autoFetch, fetchPolicies, page, limit, status, type]);
-
-  // Compute pagination metadata
-  const {
-    total: totalPolicies,
-    currentPage,
-    totalPages,
-  } = pagination;
-
-  const hasNextPage = currentPage < totalPages;
-  const hasPreviousPage = currentPage > 1;
+  }, [autoFetch, fetchPoliciesWithRetry, page, limit, status, type]);
 
   return {
     // Data
     policies,
     loading,
     error,
-    totalPolicies,
-    currentPage,
-    totalPages,
-    hasNextPage,
-    hasPreviousPage,
+    pagination,
 
     // Actions
-    fetchPolicies,
-    createPolicy,
-    updatePolicy,
-    bindPolicy,
-    addEndorsement,
+    fetchPolicies: fetchPoliciesWithRetry,
+    createPolicy: createNewPolicy,
+    updatePolicy: updateExistingPolicy,
+    bindPolicy: bindExistingPolicy,
     refreshPolicies,
     clearCache,
   };

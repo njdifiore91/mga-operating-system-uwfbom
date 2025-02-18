@@ -53,7 +53,7 @@ import {
 /**
  * Primary navigation icons for main application sections
  */
-export const navigationIcons = {
+const navigationIcons = {
   dashboard: DashboardIcon,
   policy: PolicyIcon,
   underwriting: UnderwritingIcon,
@@ -66,7 +66,7 @@ export const navigationIcons = {
 /**
  * Common UI action icons for user interactions and controls
  */
-export const actionIcons = {
+const actionIcons = {
   notifications: NotificationsIcon,
   account: AccountCircle,
   search: SearchIcon,
@@ -79,7 +79,7 @@ export const actionIcons = {
 /**
  * Icons for CRUD operations and data manipulation
  */
-export const crudIcons = {
+const crudIcons = {
   add: AddCircleOutline,
   edit: Edit,
   delete: Delete,
@@ -94,7 +94,7 @@ export const crudIcons = {
 /**
  * Status and notification indicator icons
  */
-export const statusIcons = {
+const statusIcons = {
   success: CheckCircle,
   warning: Warning,
   error: Error,
@@ -110,7 +110,7 @@ export type ActionIconType = keyof typeof actionIcons;
 export type CrudIconType = keyof typeof crudIcons;
 export type StatusIconType = keyof typeof statusIcons;
 
-// Re-export all icon groups for convenient access
+// Export all icon groups
 export {
   navigationIcons,
   actionIcons,

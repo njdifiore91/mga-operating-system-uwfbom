@@ -1,17 +1,18 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Box,
   Button,
-  FormControl,
-  FormHelperText,
   Grid,
-  TextField,
-  Typography,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Text,
+  Input,
+  FormLabel,
+  FormControl,
+  FormErrorMessage
 } from '@chakra-ui/react';
-import { Claim, ClaimLocation, ClaimantInfo, ClaimDocument } from '../../types/claims.types';
+import { Claim, ClaimLocation, ClaimantInfo } from '../../types/claims.types';
 import { useClaims } from '../../hooks/useClaims';
 import { validateClaimForm, validateClaimDocument } from '../../validators/claims.validator';
 import FileUpload from '../common/FileUpload';
@@ -43,10 +44,9 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
-    setValue,
-    watch
+    setValue
   } = useForm<ClaimFormData>({
     defaultValues: {
       policyId,
@@ -99,13 +99,15 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
       });
 
       // Upload documents if present
-      if (data.documents.length > 0) {
+      if (data.documents.length > 0 && claim) {
         await uploadDocuments(claim.id, data.documents);
       }
 
       // Reset form and notify success
       reset();
-      onSubmitSuccess?.(claim);
+      if (claim) {
+        onSubmitSuccess?.(claim);
+      }
 
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Failed to submit claim');
@@ -147,217 +149,198 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
     >
       <Grid templateColumns="repeat(12, 1fr)" gap={6}>
         {/* Incident Information */}
-        <Grid item xs={12}>
-          <Typography variant="h6" component="h2" mb={3}>
+        <Grid gridColumn="span 12">
+          <Text fontSize="xl" mb={3}>
             Incident Information
-          </Typography>
+          </Text>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
           <Controller
             name="incidentDate"
             control={control}
             render={({ field }) => (
-              <DatePicker
-                label="Incident Date"
-                value={field.value}
-                onChange={field.onChange}
-                error={!!errors.incidentDate}
-                helperText={errors.incidentDate?.message}
-                validationRules={{
-                  allowPastDates: true,
-                  businessDaysOnly: false
-                }}
-                aria-label="Select incident date"
-              />
+              <FormControl isInvalid={!!errors.incidentDate}>
+                <FormLabel>Incident Date</FormLabel>
+                <DatePicker
+                  label="Incident Date"
+                  value={field.value.toISOString()}
+                  onChange={field.onChange}
+                  error={!!errors.incidentDate}
+                  helperText={errors.incidentDate?.message}
+                  validationRules={{
+                    allowPastDates: true,
+                    businessDaysOnly: false
+                  }}
+                  aria-label="Select incident date"
+                />
+                <FormErrorMessage>{errors.incidentDate?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid gridColumn="span 12">
           <Controller
             name="description"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                multiline
-                rows={4}
-                label="Incident Description"
-                error={!!errors.description}
-                helperText={`${field.value.length}/${MAX_CLAIM_DESCRIPTION_LENGTH} characters. ${errors.description?.message || ''}`}
-                inputProps={{
-                  maxLength: MAX_CLAIM_DESCRIPTION_LENGTH,
-                  'aria-label': 'Incident description'
-                }}
-                fullWidth
-              />
+              <FormControl isInvalid={!!errors.description}>
+                <FormLabel>Incident Description</FormLabel>
+                <Input
+                  {...field}
+                  as="textarea"
+                  rows={4}
+                  maxLength={MAX_CLAIM_DESCRIPTION_LENGTH}
+                  aria-label="Incident description"
+                />
+                <FormErrorMessage>
+                  {`${field.value.length}/${MAX_CLAIM_DESCRIPTION_LENGTH} characters. ${errors.description?.message || ''}`}
+                </FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
         {/* Location Information */}
-        <Grid item xs={12}>
-          <Typography variant="h6" component="h2" mb={3}>
+        <Grid gridColumn="span 12">
+          <Text fontSize="xl" mb={3}>
             Location Information
-          </Typography>
+          </Text>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid gridColumn="span 12">
           <Controller
             name="location.address"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                label="Street Address"
-                error={!!errors.location?.address}
-                helperText={errors.location?.address?.message}
-                fullWidth
-                inputProps={{ 'aria-label': 'Street address' }}
-              />
+              <FormControl isInvalid={!!errors.location?.address}>
+                <FormLabel>Street Address</FormLabel>
+                <Input {...field} aria-label="Street address" />
+                <FormErrorMessage>{errors.location?.address?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
           <Controller
             name="location.city"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                label="City"
-                error={!!errors.location?.city}
-                helperText={errors.location?.city?.message}
-                fullWidth
-                inputProps={{ 'aria-label': 'City' }}
-              />
+              <FormControl isInvalid={!!errors.location?.city}>
+                <FormLabel>City</FormLabel>
+                <Input {...field} aria-label="City" />
+                <FormErrorMessage>{errors.location?.city?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
-        <Grid item xs={12} md={3}>
+        <Grid gridColumn={{ base: "span 12", md: "span 3" }}>
           <Controller
             name="location.state"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                label="State"
-                error={!!errors.location?.state}
-                helperText={errors.location?.state?.message}
-                fullWidth
-                inputProps={{ 'aria-label': 'State' }}
-              />
+              <FormControl isInvalid={!!errors.location?.state}>
+                <FormLabel>State</FormLabel>
+                <Input {...field} aria-label="State" />
+                <FormErrorMessage>{errors.location?.state?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
-        <Grid item xs={12} md={3}>
+        <Grid gridColumn={{ base: "span 12", md: "span 3" }}>
           <Controller
             name="location.zipCode"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                label="ZIP Code"
-                error={!!errors.location?.zipCode}
-                helperText={errors.location?.zipCode?.message}
-                fullWidth
-                inputProps={{
-                  'aria-label': 'ZIP code',
-                  pattern: '[0-9]{5}(-[0-9]{4})?'
-                }}
-              />
+              <FormControl isInvalid={!!errors.location?.zipCode}>
+                <FormLabel>ZIP Code</FormLabel>
+                <Input
+                  {...field}
+                  pattern="[0-9]{5}(-[0-9]{4})?"
+                  aria-label="ZIP code"
+                />
+                <FormErrorMessage>{errors.location?.zipCode?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
         {/* Claimant Information */}
-        <Grid item xs={12}>
-          <Typography variant="h6" component="h2" mb={3}>
+        <Grid gridColumn="span 12">
+          <Text fontSize="xl" mb={3}>
             Claimant Information
-          </Typography>
+          </Text>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
           <Controller
             name="claimantInfo.firstName"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                label="First Name"
-                error={!!errors.claimantInfo?.firstName}
-                helperText={errors.claimantInfo?.firstName?.message}
-                fullWidth
-                inputProps={{ 'aria-label': 'First name' }}
-              />
+              <FormControl isInvalid={!!errors.claimantInfo?.firstName}>
+                <FormLabel>First Name</FormLabel>
+                <Input {...field} aria-label="First name" />
+                <FormErrorMessage>{errors.claimantInfo?.firstName?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
           <Controller
             name="claimantInfo.lastName"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                label="Last Name"
-                error={!!errors.claimantInfo?.lastName}
-                helperText={errors.claimantInfo?.lastName?.message}
-                fullWidth
-                inputProps={{ 'aria-label': 'Last name' }}
-              />
+              <FormControl isInvalid={!!errors.claimantInfo?.lastName}>
+                <FormLabel>Last Name</FormLabel>
+                <Input {...field} aria-label="Last name" />
+                <FormErrorMessage>{errors.claimantInfo?.lastName?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
           <Controller
             name="claimantInfo.email"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                type="email"
-                label="Email"
-                error={!!errors.claimantInfo?.email}
-                helperText={errors.claimantInfo?.email?.message}
-                fullWidth
-                inputProps={{ 'aria-label': 'Email address' }}
-              />
+              <FormControl isInvalid={!!errors.claimantInfo?.email}>
+                <FormLabel>Email</FormLabel>
+                <Input {...field} type="email" aria-label="Email address" />
+                <FormErrorMessage>{errors.claimantInfo?.email?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid gridColumn={{ base: "span 12", md: "span 6" }}>
           <Controller
             name="claimantInfo.phone"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
-                label="Phone"
-                error={!!errors.claimantInfo?.phone}
-                helperText={errors.claimantInfo?.phone?.message}
-                fullWidth
-                inputProps={{
-                  'aria-label': 'Phone number',
-                  pattern: '[0-9]{3}-[0-9]{3}-[0-9]{4}'
-                }}
-              />
+              <FormControl isInvalid={!!errors.claimantInfo?.phone}>
+                <FormLabel>Phone</FormLabel>
+                <Input
+                  {...field}
+                  pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                  aria-label="Phone number"
+                />
+                <FormErrorMessage>{errors.claimantInfo?.phone?.message}</FormErrorMessage>
+              </FormControl>
             )}
           />
         </Grid>
 
         {/* Document Upload */}
-        <Grid item xs={12}>
-          <Typography variant="h6" component="h2" mb={3}>
+        <Grid gridColumn="span 12">
+          <Text fontSize="xl" mb={3}>
             Supporting Documents
-          </Typography>
+          </Text>
           <FileUpload
             acceptedTypes={Object.values(CLAIM_DOCUMENT_TYPES)}
             onUpload={handleFileUpload}
@@ -369,7 +352,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
 
         {/* Error Display */}
         {uploadError && (
-          <Grid item xs={12}>
+          <Grid gridColumn="span 12">
             <Alert status="error" mb={4}>
               {uploadError}
             </Alert>
@@ -377,7 +360,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
         )}
 
         {/* Form Actions */}
-        <Grid item xs={12}>
+        <Grid gridColumn="span 12">
           <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
             <Button
               variant="outline"
@@ -389,7 +372,6 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
             </Button>
             <Button
               type="submit"
-              variant="solid"
               colorScheme="blue"
               disabled={isProcessing}
               leftIcon={isProcessing ? <CircularProgress size="sm" /> : undefined}

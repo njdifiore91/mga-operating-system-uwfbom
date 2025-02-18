@@ -44,6 +44,16 @@ export interface ClaimDocument {
 }
 
 /**
+ * Interface defining the structure of a status history entry
+ */
+export interface StatusHistoryEntry {
+  date: Date;
+  status: keyof typeof CLAIM_STATUS;
+  previousStatus: keyof typeof CLAIM_STATUS;
+  reason: string;
+}
+
+/**
  * Main interface defining the comprehensive structure of a claim in the frontend
  */
 export interface Claim {
@@ -66,6 +76,7 @@ export interface Claim {
   lastActivityDate: Date;
   totalIncurred: number;
   isReopened: boolean;
+  statusHistory: StatusHistoryEntry[];
 }
 
 /**
@@ -88,4 +99,27 @@ export interface CreateClaimRequest {
 export interface UpdateClaimStatusRequest {
   status: keyof typeof CLAIM_STATUS;
   notes: string;
+}
+
+/**
+ * Interface defining the structure of claim filters
+ */
+export interface ClaimFilters {
+  status?: keyof typeof CLAIM_STATUS;
+  startDate?: Date;
+  endDate?: Date;
+  claimantName?: string;
+  policyId?: string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+/**
+ * Interface defining the structure of pagination state
+ */
+export interface PaginationState {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 }

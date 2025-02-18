@@ -32,7 +32,6 @@ const FORM_STEPS = [
 
 interface PolicyFormProps {
   initialData?: Partial<IPolicy>;
-  isEditMode?: boolean;
   onSubmit: (policy: IPolicy) => Promise<void>;
 }
 
@@ -41,7 +40,6 @@ interface PolicyFormProps {
  */
 const PolicyForm: React.FC<PolicyFormProps> = ({
   initialData = {},
-  isEditMode = false,
   onSubmit
 }) => {
   // Form state management
@@ -141,7 +139,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({
               id="policy-type"
               aria-label="Policy Type"
             >
-              {Object.values(POLICY_TYPES).map(type => (
+              {Object.keys(POLICY_TYPES).map(type => (
                 <MenuItem key={type} value={type}>
                   {type.replace(/_/g, ' ')}
                 </MenuItem>
@@ -250,7 +248,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({
   return (
     <Box sx={{ width: '100%', maxWidth: 800, mx: 'auto' }}>
       <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-        {FORM_STEPS.map((step, index) => (
+        {FORM_STEPS.map(step => (
           <Step key={step.label}>
             <StepLabel
               optional={

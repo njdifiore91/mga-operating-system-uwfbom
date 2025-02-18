@@ -22,7 +22,7 @@ const analytics = new Analytics({
  */
 const NewClaimPage: React.FC = () => {
   const navigate = useNavigate();
-  const { showSuccess, showError } = useNotification();
+  const { showNotification } = useNotification();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -37,17 +37,23 @@ const NewClaimPage: React.FC = () => {
         timestamp: new Date().toISOString()
       });
 
-      showSuccess('Claim submitted successfully');
+      showNotification({
+        message: 'Claim submitted successfully',
+        severity: 'success'
+      });
       setHasUnsavedChanges(false);
       navigate(`${CLAIMS_ROUTES.DETAILS.replace(':id', claim.id)}`);
     } catch (error) {
       console.error('Error handling claim submission success:', error);
     }
-  }, [navigate, showSuccess]);
+  }, [navigate, showNotification]);
 
   // Handle form submission error
   const handleSubmitError = useCallback((error: Error) => {
-    showError(error.message || 'Failed to submit claim. Please try again.');
+    showNotification({
+      message: error.message || 'Failed to submit claim. Please try again.',
+      severity: 'error'
+    });
     setIsSubmitting(false);
 
     // Track submission error
@@ -55,7 +61,7 @@ const NewClaimPage: React.FC = () => {
       error: error.message,
       timestamp: new Date().toISOString()
     });
-  }, [showError]);
+  }, [showNotification]);
 
   // Handle form cancellation
   const handleCancel = useCallback(() => {
@@ -94,7 +100,6 @@ const NewClaimPage: React.FC = () => {
             policyId=""
             onSubmitSuccess={handleSubmitSuccess}
             onCancel={handleCancel}
-            onFormChange={() => setHasUnsavedChanges(true)}
             isSubmitting={isSubmitting}
             onError={handleSubmitError}
           />

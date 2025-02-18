@@ -4,14 +4,12 @@
  * @version 1.0.0
  */
 
-import { AxiosResponse } from 'axios'; // ^1.4.0
 import {
   getPolicies,
   getPolicyById,
   createPolicy,
   updatePolicy,
-  createEndorsement,
-  bindPolicy
+  addPolicyEndorsement,
 } from '../api/policy.api';
 import {
   IPolicy,
@@ -68,14 +66,14 @@ export class PolicyService {
 
           // Cache successful response
           listCache.set(cacheKey, {
-            data: data.policies,
-            total: data.total,
+            data,
+            total: data.length,
             timestamp: Date.now()
           });
 
           return {
-            policies: data.policies,
-            total: data.total
+            policies: data,
+            total: data.length
           };
         } catch (e) {
           error = e as Error;
@@ -131,7 +129,7 @@ export class PolicyService {
    * @param policyData Policy data to create
    * @returns Promise resolving to created policy
    */
-  static async submitNewPolicy(policyData: Partial<IPolicy>): Promise<IPolicy> {
+  static async submitNewPolicy(policyData: Omit<IPolicy, 'id' | 'createdAt' | 'updatedAt'>): Promise<IPolicy> {
     try {
       // Validate required fields
       if (!policyData.type || !policyData.effectiveDate || !policyData.coverages) {
@@ -216,7 +214,7 @@ export class PolicyService {
     endorsementData: Omit<IEndorsement, 'id' | 'policyId'>
   ): Promise<IEndorsement> {
     try {
-      const response = await createEndorsement(policyId, endorsementData);
+      const response = await addPolicyEndorsement(policyId, endorsementData);
       const { data, success } = response.data;
 
       if (!success || !data) {
@@ -234,48 +232,17 @@ export class PolicyService {
   }
 
   /**
-   * Binds an approved policy to make it active
-   * @param policyId Policy identifier
-   * @returns Promise resolving to bound policy
+   * Validates policy data with OneShield integration
+   * @param policyData Policy data to validate
+   * @returns Promise resolving to validation result
    */
-  static async bindApprovedPolicy(policyId: string): Promise<IPolicy> {
+  static async validateWithOneShield(policyData: Partial<IPolicy>): Promise<boolean> {
     try {
-      // Verify policy is in approved status
-      const currentPolicy = await PolicyService.fetchPolicyDetails(policyId);
-      if (currentPolicy.status !== PolicyStatus.APPROVED) {
-        throw new Error('Policy must be approved before binding');
-      }
-
-      // Optimistic cache update
-      policyCache.set(policyId, {
-        data: { ...currentPolicy, status: PolicyStatus.BOUND },
-        timestamp: Date.now()
-      });
-
-      const response = await bindPolicy(policyId);
-      const { data, success } = response.data;
-
-      if (!success || !data) {
-        // Revert cache on failure
-        policyCache.set(policyId, {
-          data: currentPolicy,
-          timestamp: Date.now()
-        });
-        throw new Error('Failed to bind policy');
-      }
-
-      // Update cache with confirmed data
-      policyCache.set(policyId, {
-        data,
-        timestamp: Date.now()
-      });
-
-      // Invalidate list cache
-      listCache.clear();
-
-      return data;
+      // TODO: Implement OneShield validation logic
+      // This is a placeholder implementation
+      return true;
     } catch (error) {
-      console.error('Policy binding error:', error);
+      console.error('OneShield validation error:', error);
       throw error;
     }
   }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -32,7 +32,7 @@ const loginSchema = yup.object().shape({
   mfaCode: yup
     .string()
     .matches(/^\d{6}$/, 'MFA code must be 6 digits')
-    .when('requiresMFA', {
+    .when('$requiresMFA', {
       is: true,
       then: yup.string().required('MFA code is required'),
     }),
@@ -52,7 +52,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   // Auth hook
-  const { login, verifyMFA, isLoading, error, authState } = useAuth();
+  const { login, verifyMFA, isLoading, error } = useAuth();
 
   // Form handling
   const {
@@ -61,10 +61,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
     formState: { errors },
     setError,
     clearErrors,
-    watch,
   } = useForm({
     resolver: yupResolver(loginSchema),
     mode: 'onBlur',
+    context: { requiresMFA },
   });
 
   // Handle form submission
@@ -242,7 +242,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
 
         {error && (
           <Alert severity="error" sx={{ mt: 2 }}>
-            {error.message}
+            {error}
           </Alert>
         )}
 

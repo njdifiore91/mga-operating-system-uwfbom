@@ -73,11 +73,7 @@ export const validateRiskAssessment = (
 
   const result: ValidationResult = {
     isValid: Object.keys(errors).length === 0,
-    errors,
-    metadata: {
-      validationTime: performance.now() - startTime,
-      cached: false
-    }
+    errors
   };
 
   // Cache the result for future use
@@ -133,10 +129,7 @@ export const validateUnderwritingDecision = (
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors,
-    metadata: {
-      timestamp: new Date().toISOString()
-    }
+    errors
   };
 };
 
@@ -166,11 +159,7 @@ export const validateRiskScore = (score: number): ValidationResult => {
 
   const result: ValidationResult = {
     isValid: Object.keys(errors).length === 0,
-    errors,
-    metadata: {
-      severity: determineRiskSeverity(score),
-      autoApprovalEligible: score <= RISK_SCORE_RANGES.LOW_RISK.max
-    }
+    errors
   };
 
   // Cache the result

@@ -70,7 +70,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   // Handle sidebar toggle with persistence
   const handleSidebarToggle = useCallback(() => {
-    setIsSidebarOpen(prev => {
+    setIsSidebarOpen((prev: boolean) => {
       const newState = !prev;
       localStorage.setItem('mga_sidebar_state', JSON.stringify(newState));
       return newState;
@@ -141,7 +141,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {/* Page content */}
           <StyledContent
             maxWidth={false}
-            component="main"
+            role="main"
             aria-label="Page content"
           >
             {children}

@@ -4,7 +4,6 @@ import {
   Typography,
   CircularProgress,
   Divider,
-  Collapse,
   Tooltip,
   Alert,
   Box,
@@ -21,12 +20,10 @@ import {
   TrendingUp,
   TrendingDown,
   TrendingFlat,
-  ExpandMore,
-  ExpandLess,
   InfoOutlined,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { IRiskAssessmentDisplay, RiskSeverity, IRiskFactorDisplay, IRiskTrend } from '../../types/underwriting.types';
+import { IRiskAssessmentDisplay, RiskSeverity } from '../../types/underwriting.types';
 import { useUnderwriting } from '../../hooks/useUnderwriting';
 import StatusBadge from '../common/StatusBadge';
 import { RISK_SEVERITY } from '../../constants/underwriting.constants';
@@ -57,6 +54,8 @@ interface RiskAssessmentProps {
   enableRealTime?: boolean;
 }
 
+type RiskTrend = 'INCREASING' | 'DECREASING' | 'STABLE';
+
 const RiskAssessment: React.FC<RiskAssessmentProps> = ({
   policyId,
   showDetails = true,
@@ -73,10 +72,7 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({
   // Handle real-time updates subscription
   useEffect(() => {
     if (enableRealTime && policyId) {
-      const subscription = submitForUnderwriting(policyId);
-      return () => {
-        subscription.unsubscribe?.();
-      };
+      submitForUnderwriting(policyId);
     }
   }, [enableRealTime, policyId, submitForUnderwriting]);
 
@@ -98,7 +94,7 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({
   }, []);
 
   // Get trend icon and color
-  const getTrendIndicator = useCallback((trend: IRiskTrend) => {
+  const getTrendIndicator = useCallback((trend: RiskTrend) => {
     const indicators = {
       INCREASING: { icon: <TrendingUp color="error" />, label: 'Risk Increasing' },
       DECREASING: { icon: <TrendingDown color="success" />, label: 'Risk Decreasing' },
@@ -130,7 +126,7 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({
   if (error) {
     return (
       <Alert severity="error" sx={{ mb: 2 }}>
-        Failed to load risk assessment: {error.message}
+        Failed to load risk assessment
       </Alert>
     );
   }
@@ -154,7 +150,7 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({
             size={120}
             thickness={8}
             sx={{
-              color: RISK_SEVERITY[riskAssessment.severity].color,
+              color: RISK_SEVERITY[riskAssessment.severity as keyof typeof RISK_SEVERITY].color,
               position: 'absolute',
             }}
           />
@@ -166,12 +162,12 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({
           <StatusBadge
             statusType="underwriting"
             status={riskAssessment.severity}
-            label={RISK_SEVERITY[riskAssessment.severity].label}
+            label={RISK_SEVERITY[riskAssessment.severity as keyof typeof RISK_SEVERITY].label}
           />
           {riskAssessment.trend && (
-            <Tooltip title={getTrendIndicator(riskAssessment.trend).label}>
+            <Tooltip title={getTrendIndicator(riskAssessment.trend as RiskTrend).label}>
               <IconButton size="small" sx={{ ml: 1 }}>
-                {getTrendIndicator(riskAssessment.trend).icon}
+                {getTrendIndicator(riskAssessment.trend as RiskTrend).icon}
               </IconButton>
             </Tooltip>
           )}
@@ -187,8 +183,6 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({
             <RiskFactorItem
               key={`${factor.type}-${index}`}
               divider
-              button
-              aria-label={`Risk factor: ${factor.type}`}
             >
               <ListItemIcon>
                 {getRiskSeverityIcon(factor.severity)}
@@ -209,9 +203,9 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({
                 }
               />
               {factor.trend && (
-                <Tooltip title={getTrendIndicator(factor.trend).label}>
+                <Tooltip title={getTrendIndicator(factor.trend as RiskTrend).label}>
                   <IconButton size="small">
-                    {getTrendIndicator(factor.trend).icon}
+                    {getTrendIndicator(factor.trend as RiskTrend).icon}
                   </IconButton>
                 </Tooltip>
               )}

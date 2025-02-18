@@ -9,19 +9,20 @@ import {
   Snackbar
 } from '@mui/material';
 import {
-  LockIcon,
-  DownloadIcon,
+  Lock as LockIcon,
+  Download as DownloadIcon,
   ErrorOutline,
-  ZoomInIcon,
-  ZoomOutIcon,
-  PrintIcon
+  ZoomIn as ZoomInIcon,
+  ZoomOut as ZoomOutIcon,
+  Print as PrintIcon
 } from '@mui/icons-material';
-import { Document, Page, pdfjs } from '@react-pdf/renderer';
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack';
 import { IDocument } from '../../types/documents.types';
 import LoadingSpinner from '../common/LoadingSpinner';
-import DocumentService from '../../services/documents.service';
+import { DocumentService } from '../../services/documents.service';
 
 // Configure PDF.js worker
+import { pdfjs } from 'react-pdf';
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface DocumentPreviewProps {
@@ -35,7 +36,6 @@ interface DocumentPreviewProps {
 const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   document,
   showControls = true,
-  onClose,
   onError,
   userAccessLevel
 }) => {
@@ -56,7 +56,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         if (!hasAccess) {
           throw new Error('Insufficient permissions to view this document');
         }
-        setShowWatermark(document.securityLevel === 'RESTRICTED');
+        setShowWatermark(document.securityClassification === 'RESTRICTED');
       } catch (err) {
         const error = err as Error;
         setError(error.message);
@@ -86,7 +86,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       // Create secure download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = window.document.createElement('a');
       link.href = url;
       link.download = document.fileName;
       link.click();
@@ -161,8 +161,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
         {document.fileType.includes('pdf') ? (
           <Document
-            file={`/api/documents/${document.id}/content`}
-            onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+            onLoadSuccess={({ numPages: pages }) => setNumPages(pages)}
             loading={<LoadingSpinner size={40} color="primary" />}
             error={
               <Typography color="error">
@@ -171,7 +170,6 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             }
           >
             <Page
-              pageNumber={currentPage}
               scale={scale}
               renderTextLayer={false}
               renderAnnotationLayer={false}
@@ -244,7 +242,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             <Tooltip title="Print">
               <IconButton
                 onClick={() => window.print()}
-                disabled={loading || document.securityLevel === 'RESTRICTED'}
+                disabled={loading || document.securityClassification === 'RESTRICTED'}
               >
                 <PrintIcon />
               </IconButton>
@@ -252,7 +250,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             <Tooltip title="Download">
               <IconButton
                 onClick={handleDownload}
-                disabled={loading || document.securityLevel === 'RESTRICTED'}
+                disabled={loading || document.securityClassification === 'RESTRICTED'}
               >
                 <DownloadIcon />
               </IconButton>

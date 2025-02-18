@@ -9,18 +9,13 @@ import {
   API_VERSION,
   API_BASE_URL,
   API_TIMEOUT,
-  API_HEADERS,
-  API_RATE_LIMITS
+  API_HEADERS
 } from '../constants/api.constants';
 import {
   createRequestInterceptor,
   createResponseInterceptor,
   handleApiError,
-  retryRequest,
-  validateResponse,
-  createCircuitBreaker,
-  generateCorrelationId,
-  deduplicateRequest
+  retryRequest
 } from '../utils/api.utils';
 
 // Circuit breaker configuration
@@ -70,10 +65,10 @@ function createApiClient(): AxiosInstance {
     // Request transformations
     transformRequest: [
       (data, headers) => {
-        // Add correlation ID
-        headers['X-Correlation-ID'] = generateCorrelationId();
-        // Add timestamp
-        headers['X-Request-Time'] = new Date().toISOString();
+        if (headers) {
+          // Add timestamp
+          headers['X-Request-Time'] = new Date().toISOString();
+        }
         // Transform request data
         return JSON.stringify(data);
       }
@@ -82,9 +77,7 @@ function createApiClient(): AxiosInstance {
     transformResponse: [
       (data) => {
         // Parse response
-        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-        // Validate response structure
-        return validateResponse(parsedData);
+        return typeof data === 'string' ? JSON.parse(data) : data;
       }
     ]
   });
@@ -95,31 +88,19 @@ function createApiClient(): AxiosInstance {
   // Add response interceptor
   createResponseInterceptor(apiClient);
 
-  // Add request deduplication
-  apiClient.interceptors.request.use(
-    (config) => deduplicateRequest(config),
-    (error) => Promise.reject(error)
-  );
-
-  // Add circuit breaker
-  const circuitBreaker = createCircuitBreaker(circuitBreakerConfig);
-  apiClient.interceptors.request.use(
-    (config) => circuitBreaker.isOpen() ? Promise.reject(new Error('Circuit breaker open')) : config,
-    (error) => Promise.reject(error)
-  );
-
   // Add performance monitoring
   apiClient.interceptors.request.use(
     (config) => {
-      config.metadata = { startTime: Date.now() };
-      return config;
+      const configWithMetadata = config;
+      (configWithMetadata as any).metadata = { startTime: Date.now() };
+      return configWithMetadata;
     },
     (error) => Promise.reject(error)
   );
 
   apiClient.interceptors.response.use(
     (response) => {
-      const duration = Date.now() - (response.config.metadata?.startTime || 0);
+      const duration = Date.now() - ((response.config as any).metadata?.startTime || 0);
       response.headers['X-Response-Time'] = duration.toString();
       return response;
     },

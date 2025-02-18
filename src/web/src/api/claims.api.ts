@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { AxiosResponse, AxiosError, AxiosRequestConfig } from 'axios'; // ^1.4.0
+import { AxiosError, AxiosRequestConfig } from 'axios'; // ^1.4.0
 import { apiClient } from '../config/api.config';
 import { API_ENDPOINTS } from '../constants/api.constants';
 import {
@@ -203,13 +203,19 @@ function validateDocumentUpload(formData: FormData): void {
 
 // Error handling helper
 function handleClaimsApiError(error: AxiosError): Error {
+  interface ErrorResponse {
+    message?: string;
+    code?: string;
+  }
+
+  const errorResponse = (error.response?.data || {}) as ErrorResponse;
   const baseError = new Error(
-    error.response?.data?.message || 'An error occurred while processing the claim'
+    errorResponse.message || 'An error occurred while processing the claim'
   );
   
   baseError.name = 'ClaimsApiError';
   (baseError as any).status = error.response?.status;
-  (baseError as any).code = error.response?.data?.code;
+  (baseError as any).code = errorResponse.code;
   
   return baseError;
 }

@@ -15,7 +15,7 @@ interface OktaConfig {
   clientId: string;
   redirectUri: string;
   scopes: string[];
-  responseType: string[];
+  responseType: ('code' | 'id_token' | 'token')[];
   pkce: boolean;
   tokenManager: {
     storage: 'cookie' | 'memory';

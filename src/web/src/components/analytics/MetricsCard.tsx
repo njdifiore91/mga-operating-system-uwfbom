@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, Typography, Box, Tooltip, Skeleton } from '@mui/material';
 import { TrendingUp, TrendingDown, TrendingFlat } from '@mui/icons-material';
 import { MetricTrend } from '../../types/analytics.types';
-import { StatusBadge } from '../common/StatusBadge';
+import StatusBadge from '../common/StatusBadge';
 
 /**
  * Props interface for the MetricsCard component
@@ -67,7 +67,7 @@ const formatValue = (
  */
 const getTrendIcon = (trend: MetricTrend['trend']) => {
   const iconProps = {
-    fontSize: 'small',
+    fontSize: "small" as const,
     sx: { 
       verticalAlign: 'middle',
       ml: 1

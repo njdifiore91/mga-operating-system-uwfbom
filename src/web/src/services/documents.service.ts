@@ -4,7 +4,6 @@
  * @version 1.0.0
  */
 
-import { Observable } from 'rxjs'; // ^7.8.0
 import { documentsApi } from '../api/documents.api';
 import {
   IDocument,
@@ -18,8 +17,6 @@ import {
 // Constants for document handling
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_FILE_TYPES = ['.pdf', '.docx', '.jpg', '.png'];
-const ENCRYPTION_ALGORITHMS = ['AES-256-GCM', 'AES-256-CBC'];
-const MAX_RETRY_ATTEMPTS = 3;
 const RETENTION_PERIODS = {
   standard: 7,
   extended: 10,
@@ -77,14 +74,16 @@ export class DocumentService {
         {
           ...params,
           securityClassification: securityLevel,
-          retentionPeriod: RETENTION_PERIODS[params.retentionPeriod] || RETENTION_PERIODS.standard
+          retentionPeriod: typeof params.retentionPeriod === 'string' && params.retentionPeriod in RETENTION_PERIODS
+            ? RETENTION_PERIODS[params.retentionPeriod as keyof typeof RETENTION_PERIODS]
+            : RETENTION_PERIODS.standard
         },
         progressHandler
       );
 
       return document;
     } catch (error) {
-      throw new Error(`Document upload failed: ${error.message}`);
+      throw new Error(`Document upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -127,7 +126,7 @@ export class DocumentService {
         total: filteredDocuments.length
       };
     } catch (error) {
-      throw new Error(`Failed to retrieve documents: ${error.message}`);
+      throw new Error(`Failed to retrieve documents: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -140,7 +139,7 @@ export class DocumentService {
     try {
       return await documentsApi.getDocumentById(documentId);
     } catch (error) {
-      throw new Error(`Failed to retrieve document details: ${error.message}`);
+      throw new Error(`Failed to retrieve document details: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -157,7 +156,7 @@ export class DocumentService {
     try {
       return await documentsApi.downloadDocument(documentId, onProgress);
     } catch (error) {
-      throw new Error(`Document download failed: ${error.message}`);
+      throw new Error(`Document download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -180,20 +179,18 @@ export class DocumentService {
 
       await documentsApi.deleteDocument(documentId);
     } catch (error) {
-      throw new Error(`Document deletion failed: ${error.message}`);
+      throw new Error(`Document deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Updates document security classification
    * @param documentId Document identifier
-   * @param newClassification New security classification
    * @param currentClearance User's current security clearance
    * @returns Promise resolving to updated document
    */
   public async updateSecurityClassification(
     documentId: string,
-    newClassification: string,
     currentClearance: string
   ): Promise<IDocument> {
     try {
@@ -206,29 +203,27 @@ export class DocumentService {
       // Implementation would call an API endpoint to update classification
       throw new Error('Method not implemented');
     } catch (error) {
-      throw new Error(`Failed to update security classification: ${error.message}`);
+      throw new Error(`Failed to update security classification: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Updates document retention policy
-   * @param documentId Document identifier
    * @param retentionPeriod New retention period
    * @returns Promise resolving to updated document
    */
   public async updateRetentionPolicy(
-    documentId: string,
-    retentionPeriod: number
+    retentionPeriod: keyof typeof RETENTION_PERIODS
   ): Promise<IDocument> {
     try {
-      if (!Object.values(RETENTION_PERIODS).includes(retentionPeriod)) {
+      if (!(retentionPeriod in RETENTION_PERIODS)) {
         throw new Error('Invalid retention period');
       }
 
       // Implementation would call an API endpoint to update retention policy
       throw new Error('Method not implemented');
     } catch (error) {
-      throw new Error(`Failed to update retention policy: ${error.message}`);
+      throw new Error(`Failed to update retention policy: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

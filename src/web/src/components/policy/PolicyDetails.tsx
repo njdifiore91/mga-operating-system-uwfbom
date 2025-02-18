@@ -8,13 +8,12 @@ import {
   Divider,
   Skeleton,
   Box,
-  useTheme
 } from '@mui/material';
-import { formatCurrency, formatDate } from '@mui/x-data-grid';
 import { IPolicy, PolicyType, PolicyStatus } from '../../types/policy.types';
 import PolicyService from '../../services/policy.service';
 import PolicyTimeline from './PolicyTimeline';
 import StatusBadge from '../common/StatusBadge';
+import { formatDate } from '../../utils/date.utils';
 
 // Interface for component props
 interface PolicyDetailsProps {
@@ -24,6 +23,14 @@ interface PolicyDetailsProps {
   refreshInterval?: number;
   showActions?: boolean;
 }
+
+// Utility function for currency formatting
+const formatCurrency = (amount: number, currency: string): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency
+  }).format(amount);
+};
 
 // Custom hook for managing policy details state
 const usePolicyDetails = (policyId: string, refreshInterval?: number) => {
@@ -63,7 +70,7 @@ const usePolicyDetails = (policyId: string, refreshInterval?: number) => {
     }
   }, [policyId]);
 
-  return { policy, loading, error, updatePolicy, refreshData: fetchPolicyDetails };
+  return { policy, loading, error, refreshData: fetchPolicyDetails };
 };
 
 /**
@@ -77,8 +84,7 @@ const PolicyDetails: React.FC<PolicyDetailsProps> = ({
   refreshInterval,
   showActions = true
 }) => {
-  const theme = useTheme();
-  const { policy, loading, error, updatePolicy, refreshData } = usePolicyDetails(
+  const { policy, loading, error, refreshData } = usePolicyDetails(
     policyId,
     refreshInterval
   );

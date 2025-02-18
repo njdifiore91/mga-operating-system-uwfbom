@@ -42,7 +42,7 @@ export const selectClaimById = (claimId: string) =>
       }
 
       // Fallback to claims array if not in cache
-      return claimsState.claims.find(claim => claim.id === claimId);
+      return claimsState.claims.find((claim: Claim) => claim.id === claimId);
     }
   );
 
@@ -81,7 +81,7 @@ export const selectFilteredClaims = createSelector(
   [selectClaimsState],
   (claimsState) => {
     const { claims, filters } = claimsState;
-    return claims.filter(claim => {
+    return claims.filter((claim: Claim) => {
       if (filters.status && claim.status !== filters.status) return false;
       if (filters.policyId && claim.policyId !== filters.policyId) return false;
       if (filters.startDate && new Date(claim.incidentDate) < new Date(filters.startDate)) return false;

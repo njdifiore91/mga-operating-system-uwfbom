@@ -17,6 +17,15 @@ type AccessToken = Brand<string, 'AccessToken'>;
 type RefreshToken = Brand<string, 'RefreshToken'>;
 type UserId = Brand<string, 'UserId'>;
 
+// Utility functions to create branded types
+export const createEmail = (value: string): Email => value as Email;
+export const createPassword = (value: string): Password => value as Password;
+export const createSessionToken = (value: string): SessionToken => value as SessionToken;
+export const createResetToken = (value: string): ResetToken => value as ResetToken;
+export const createAccessToken = (value: string): AccessToken => value as AccessToken;
+export const createRefreshToken = (value: string): RefreshToken => value as RefreshToken;
+export const createUserId = (value: string): UserId => value as UserId;
+
 /**
  * Type-safe interface for user login credentials
  */
@@ -101,6 +110,19 @@ export type AuthStatus =
 export interface AuthError {
   code: string;
   message: string;
+}
+
+/**
+ * Interface for security event logging
+ */
+export interface SecurityEvent {
+  timestamp: Date;
+  eventType: 'login' | 'logout' | 'mfa_attempt' | 'password_reset' | 'access_denied';
+  userId?: UserId;
+  ipAddress: string;
+  userAgent: string;
+  success: boolean;
+  details?: Record<string, unknown>;
 }
 
 /**

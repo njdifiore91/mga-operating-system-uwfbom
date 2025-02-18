@@ -21,10 +21,9 @@ import {
   Select,
   TextField,
   Typography,
-  Alert,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
-import { analytics } from '@segment/analytics-next';
+import { Analytics } from '@segment/analytics-next';
 import { IEndorsement } from '../../types/policy.types';
 import { PolicyService } from '../../services/policy.service';
 
@@ -37,11 +36,13 @@ const ENDORSEMENT_TYPES = {
   LOCATION_CHANGE: 'Location Change',
 } as const;
 
+type EndorsementType = typeof ENDORSEMENT_TYPES[keyof typeof ENDORSEMENT_TYPES];
+
 // Validation schema with business rules
 const endorsementSchema = yup.object().shape({
   type: yup.string()
     .required('Endorsement type is required')
-    .oneOf(Object.values(ENDORSEMENT_TYPES), 'Invalid endorsement type'),
+    .oneOf(Object.values(ENDORSEMENT_TYPES), 'Invalid endorsement type') as yup.StringSchema<EndorsementType>,
   effectiveDate: yup.date()
     .required('Effective date is required')
     .min(new Date(), 'Effective date cannot be in the past')
@@ -69,18 +70,19 @@ export const EndorsementForm: React.FC<EndorsementFormProps> = ({
   onCancel,
   initialData,
 }) => {
+  const analytics = new Analytics();
+
   // Form initialization with validation
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting, isDirty },
-    reset,
     watch,
   } = useForm<IEndorsement>({
     resolver: yupResolver(endorsementSchema),
     defaultValues: {
       type: initialData?.type || '',
-      effectiveDate: initialData?.effectiveDate || new Date(),
+      effectiveDate: initialData?.effectiveDate || null,
       changes: initialData?.changes || {},
       premiumChange: initialData?.premiumChange || 0,
     },
@@ -96,7 +98,7 @@ export const EndorsementForm: React.FC<EndorsementFormProps> = ({
         timestamp: new Date().toISOString(),
       });
     }
-  }, [formValues, isDirty, policyId]);
+  }, [formValues, isDirty, policyId, analytics]);
 
   // Auto-save functionality
   useEffect(() => {
@@ -227,7 +229,7 @@ export const EndorsementForm: React.FC<EndorsementFormProps> = ({
                 fullWidth
                 required
                 error={!!errors.changes}
-                helperText={errors.changes?.message}
+                helperText={errors.changes?.message || ''}
                 onChange={(e) => field.onChange(JSON.parse(e.target.value || '{}'))}
                 value={JSON.stringify(field.value, null, 2)}
               />
@@ -248,7 +250,7 @@ export const EndorsementForm: React.FC<EndorsementFormProps> = ({
                 fullWidth
                 required
                 error={!!errors.premiumChange}
-                helperText={errors.premiumChange?.message}
+                helperText={errors.premiumChange?.message || ''}
                 InputProps={{
                   startAdornment: '$',
                 }}
@@ -288,27 +290,6 @@ export const EndorsementForm: React.FC<EndorsementFormProps> = ({
       </Grid>
     </Box>
   );
-};
-
-// Custom hook for form logic reuse
-export const useEndorsementForm = (policyId: string) => {
-  const {
-    control,
-    handleSubmit,
-    formState,
-    reset,
-    watch,
-  } = useForm<IEndorsement>({
-    resolver: yupResolver(endorsementSchema),
-  });
-
-  return {
-    control,
-    handleSubmit,
-    formState,
-    reset,
-    watch,
-  };
 };
 
 export default EndorsementForm;

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Box, Typography, Chip, CircularProgress, Alert } from '@mui/material'; // @mui/material@5.14.x
+import { Box, Typography, Chip, Alert, Button } from '@mui/material'; // @mui/material@5.14.x
 import { GridColDef } from '@mui/x-data-grid'; // @mui/x-data-grid@6.10.x
 import { formatCurrency } from '../../utils/format.utils';
 import DataGrid from '../common/DataGrid';
@@ -113,7 +113,7 @@ const ClaimsList: React.FC<ClaimsListProps> = React.memo(({
             sortOrder: initialSort.sortOrder
           }}
           onPaginationChange={handlePageChange}
-          onSortModelChange={handleSortChange}
+          onFilterChange={handleSortChange}
           onRowClick={handleRowClick}
           defaultPageSize={pageSize}
           ariaLabel="Claims list"
@@ -147,7 +147,7 @@ const useGridColumns = (): GridColDef[] => {
       minWidth: 150,
       renderCell: (params) => (
         <Chip
-          label={CLAIM_STATUS_LABELS[params.value]}
+          label={CLAIM_STATUS_LABELS[params.value as keyof typeof CLAIM_STATUS_LABELS]}
           className={`status-chip ${params.row.priorityLevel === 'HIGH' ? 'high-priority' : ''}`}
           size="small"
         />

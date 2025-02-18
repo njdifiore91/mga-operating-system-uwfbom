@@ -63,7 +63,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       <CircularProgress
         size={size}
         sx={{
-          color: (theme) => theme.palette[color] || color,
+          color,
           animationDuration,
           // Optimize animation performance
           willChange: 'transform',

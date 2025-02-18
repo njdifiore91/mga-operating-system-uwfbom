@@ -90,7 +90,7 @@ export const selectLastActivity = createSelector(
  */
 export const selectSessionTimeout = createSelector(
   [selectAuthState],
-  (auth): number | null => auth.sessionTimeout
+  (auth): number | null => (auth as any).sessionTimeout || null
 );
 
 /**

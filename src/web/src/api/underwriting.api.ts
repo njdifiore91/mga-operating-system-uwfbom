@@ -4,7 +4,6 @@
  * @version 1.0.0
  */
 
-import { AxiosResponse } from 'axios'; // ^1.4.0
 import CircuitBreaker from 'opossum'; // ^6.0.0
 import { apiClient } from '../config/api.config';
 import { API_ENDPOINTS } from '../constants/api.constants';
@@ -90,7 +89,7 @@ export async function getRiskAssessment(
     return {
       ...assessmentData,
       timestamp: new Date().toISOString(),
-      factors: assessmentData.factors.sort((a, b) => b.score - a.score)
+      factors: assessmentData.factors.sort((a: IRiskFactor, b: IRiskFactor) => b.score - a.score)
     };
   } catch (error) {
     // Log error with context
@@ -137,7 +136,6 @@ export async function submitForUnderwriting(
       apiClient.post<IRiskAssessmentDisplay>(
         API_ENDPOINTS.UNDERWRITING.ASSESS,
         {
-          policyId,
           ...underwritingData,
           metadata: {
             submittedAt: new Date().toISOString(),

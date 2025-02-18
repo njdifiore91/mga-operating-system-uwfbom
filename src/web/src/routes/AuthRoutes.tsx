@@ -17,7 +17,7 @@ import { AuthError } from '../types/auth.types';
  */
 const AuthRoutes: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, authState, checkSession } = useAuth();
+  const { isAuthenticated, authState } = useAuth();
 
   // Track route changes for analytics and security monitoring
   useEffect(() => {
@@ -26,33 +26,13 @@ const AuthRoutes: React.FC = () => {
       const routeData = {
         path: location.pathname,
         timestamp: new Date().toISOString(),
-        sessionId: authState?.sessionToken
+        sessionId: authState.user?.id
       };
       console.info('Auth route changed:', routeData);
     };
 
     trackRouteChange();
-  }, [location, authState?.sessionToken]);
-
-  // Validate session on mount and route changes
-  useEffect(() => {
-    checkSession();
-  }, [checkSession, location.pathname]);
-
-  // Handle successful login with MFA flow
-  const handleLoginSuccess = async (requiresMFA: boolean, sessionToken: string) => {
-    if (requiresMFA) {
-      return <Navigate 
-        to="/auth/mfa-verification" 
-        state={{ sessionToken, from: location.pathname }}
-        replace 
-      />;
-    }
-    
-    // Get intended destination or default to dashboard
-    const destination = location.state?.from || '/dashboard';
-    return <Navigate to={destination} replace />;
-  };
+  }, [location, authState.user?.id]);
 
   // Handle authentication errors
   const handleAuthError = (error: AuthError) => {
@@ -83,9 +63,10 @@ const AuthRoutes: React.FC = () => {
                 <Navigate to="/dashboard" replace />
               ) : (
                 <LoginForm
-                  onSuccess={(requiresMFA, sessionToken) => 
-                    handleLoginSuccess(requiresMFA, sessionToken)
-                  }
+                  onSuccess={() => {
+                    const destination = location.state?.from || '/dashboard';
+                    return <Navigate to={destination} replace />;
+                  }}
                   onError={handleAuthError}
                 />
               )
@@ -98,13 +79,11 @@ const AuthRoutes: React.FC = () => {
             element={
               authState.status === 'mfa_required' ? (
                 <MFAVerification
-                  sessionToken={authState.sessionToken || ''}
-                  onVerificationSuccess={() => (
-                    <Navigate 
-                      to={location.state?.from || '/dashboard'} 
-                      replace 
-                    />
-                  )}
+                  sessionToken={authState.user?.id || ''}
+                  onSuccess={() => {
+                    const destination = location.state?.from || '/dashboard';
+                    return <Navigate to={destination} replace />;
+                  }}
                 />
               ) : (
                 <Navigate to="/login" replace />
@@ -119,15 +98,7 @@ const AuthRoutes: React.FC = () => {
               isAuthenticated ? (
                 <Navigate to="/dashboard" replace />
               ) : (
-                <PasswordReset
-                  onResetSuccess={() => (
-                    <Navigate 
-                      to="/login" 
-                      state={{ passwordReset: true }} 
-                      replace 
-                    />
-                  )}
-                />
+                <PasswordReset />
               )
             }
           />

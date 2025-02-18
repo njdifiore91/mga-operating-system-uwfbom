@@ -82,7 +82,7 @@ const ErrorFallback: React.FC<{ error: Error; resetErrorBoundary: () => void }> 
  * with enhanced security, accessibility, and performance features
  */
 const AppRouter: React.FC = () => {
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Handle loading state
   if (isLoading) {

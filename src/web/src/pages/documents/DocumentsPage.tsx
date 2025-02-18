@@ -16,13 +16,11 @@ import {
   Security as SecurityIcon,
   FilterList as FilterIcon
 } from '@mui/icons-material';
-import { useEncryption } from '@aws-crypto/client-browser'; // ^3.0.0
 import DocumentsList from '../../components/documents/DocumentsList';
 import { 
   IDocument, 
   DocumentType, 
-  DocumentStatus,
-  DocumentUploadState 
+  DocumentStatus
 } from '../../types/documents.types';
 import { useDocuments } from '../../hooks/useDocuments';
 import theme from '../../styles/theme';
@@ -44,18 +42,12 @@ const DocumentsPage: React.FC = () => {
     isLoading,
     error,
     uploadDocument,
-    deleteDocument,
     uploadState,
     encryptionStatus,
     validateDocument
   } = useDocuments({
     securityClass: 'STANDARD',
     retentionDays: 7
-  });
-
-  // Initialize encryption client for secure document handling
-  const { encryptionClient } = useEncryption({
-    keyring: process.env.REACT_APP_AWS_KMS_KEY_ID
   });
 
   /**
@@ -152,7 +144,7 @@ const DocumentsPage: React.FC = () => {
             <Tooltip title="Filter by type">
               <IconButton
                 aria-label="Filter documents"
-                onClick={() => {/* Implement filter dialog */}}
+                onClick={() => setFilterType(filterType ? '' : DocumentType.POLICY)}
               >
                 <FilterIcon />
               </IconButton>
@@ -210,7 +202,6 @@ const DocumentsPage: React.FC = () => {
         </Box>
       ) : (
         <DocumentsList
-          documents={filteredDocuments}
           onDocumentSelect={handleDocumentSelect}
           securityLevel="STANDARD"
           enableBulkActions

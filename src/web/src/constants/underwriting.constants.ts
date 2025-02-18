@@ -5,8 +5,6 @@
  * @version 1.0.0
  */
 
-import { POLICY_TYPES } from '../constants/policy.constants';
-
 /**
  * Enum defining all possible underwriting review statuses
  * Used for tracking the state of policy underwriting reviews

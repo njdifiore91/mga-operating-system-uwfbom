@@ -6,33 +6,44 @@
  */
 
 import { memoize } from 'lodash'; // ^4.17.21
-import { format, differenceInDays, isValid } from 'date-fns'; // ^2.30.0
 import {
   PolicyMetrics,
   UnderwritingMetrics,
   ComplianceMetrics,
-  MetricDefinition,
-  AnomalyConfig,
-  MetricTrend,
-  TrendPeriod
+  MetricTrend
 } from '../types/analytics.types';
 import {
   getDashboardMetrics,
   getPerformanceReport,
-  getMetricsByType,
-  subscribeToMetricUpdates
+  getMetricsByType
 } from '../api/analytics.api';
 
 // Constants for analytics configuration
-const TREND_CONFIDENCE_THRESHOLD = 0.85;
 const ANOMALY_DETECTION_WINDOW = 30; // days
-const METRIC_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const TREND_PERIODS: Record<TrendPeriod, number> = {
+const TREND_PERIODS = {
   daily: 1,
   weekly: 7,
   monthly: 30,
   quarterly: 90
-};
+} as const;
+
+type TrendPeriod = keyof typeof TREND_PERIODS;
+
+interface AnomalyConfig {
+  threshold: number;
+  sensitivity: number;
+}
+
+interface MetricDefinition {
+  name: string;
+  calculation: string;
+  dataSource: string;
+  aggregation?: 'sum' | 'average' | 'count';
+  thresholds?: {
+    warning: number;
+    critical: number;
+  };
+}
 
 /**
  * Calculates metric trends with anomaly detection and confidence scoring
@@ -75,8 +86,6 @@ export const calculateMetricTrends = memoize(
           values[values.length - 1]
         ),
         trend: trendDirection,
-        confidence,
-        anomalies,
         lastUpdated: new Date().toISOString()
       };
     }
@@ -126,6 +135,43 @@ export const validateMetricDefinition = (
   return {
     isValid: errors.length === 0,
     errors
+  };
+};
+
+/**
+ * Fetches metrics by category with caching and error handling
+ * @param category Metric category to fetch
+ * @param dateRange Optional date range for filtering
+ * @returns Promise resolving to category-specific metrics
+ */
+export const fetchMetricsByCategory = async (
+  category: string,
+  dateRange?: { startDate: string; endDate: string }
+): Promise<PolicyMetrics | UnderwritingMetrics | ComplianceMetrics> => {
+  return getMetricsByType(category, dateRange || { startDate: '', endDate: '' });
+};
+
+/**
+ * Initializes WebSocket connection for real-time metric updates
+ * @param onMessage Callback function for handling incoming messages
+ * @returns Cleanup function to close the connection
+ */
+export const initializeWebSocket = (
+  onMessage: (data: any) => void
+): () => void => {
+  const ws = new WebSocket(`${process.env.REACT_APP_WS_URL}/analytics`);
+  
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage(data);
+    } catch (error) {
+      console.error('WebSocket message parsing error:', error);
+    }
+  };
+
+  return () => {
+    ws.close();
   };
 };
 

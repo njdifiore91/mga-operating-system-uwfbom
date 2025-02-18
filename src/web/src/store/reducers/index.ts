@@ -16,19 +16,102 @@ import uiReducer from './ui.reducer';
 // Import state types
 import type { AuthState } from '../../types/auth.types';
 import type { PolicyState } from './policy.reducer';
-import type { ClaimsState } from './claims.reducer';
-import type { UnderwritingState } from './underwriting.reducer';
-import type { UIState } from './ui.reducer';
+import type { Claim } from '../../types/claims.types';
+import type { IRiskAssessmentDisplay, IUnderwritingQueueItem } from '../../types/underwriting.types';
+import type { ThemeMode, Breakpoint, Notification, Modal } from '../actions/ui.actions';
 
 /**
  * Combined root state interface with complete type safety
  */
 export interface RootState {
-  auth: AuthState;
+  auth: AuthState & {
+    sessionTimeout: number | null;
+    securityEvents: Array<{
+      timestamp: number;
+      type: string;
+      details: Record<string, unknown>;
+    }>;
+  };
   policy: PolicyState;
-  claims: ClaimsState;
-  underwriting: UnderwritingState;
-  ui: UIState;
+  claims: {
+    claims: Claim[];
+    selectedClaim: Claim | null;
+    loading: boolean;
+    error: {
+      code: string;
+      message: string;
+      details?: unknown;
+      timestamp: number;
+    } | null;
+    lastSync: Date | null;
+    pendingUpdates: Record<string, Partial<Claim>>;
+    documentUploadProgress: Record<string, number>;
+    filters: {
+      status?: string;
+      policyId?: string;
+      startDate?: string;
+      endDate?: string;
+      search?: string;
+    };
+    pagination: {
+      page: number;
+      pageSize: number;
+      total: number;
+      totalPages: number;
+    };
+    cache: Record<string, {
+      data: any;
+      timestamp: number;
+      expiresIn: number;
+    }>;
+  };
+  underwriting: {
+    riskAssessment: IRiskAssessmentDisplay | null;
+    queueItems: IUnderwritingQueueItem[];
+    loading: boolean;
+    error: {
+      message: string;
+      code?: string;
+      context?: string;
+      timestamp: number;
+      recoveryAttempts: number;
+    } | null;
+    cache: {
+      assessments: Record<string, {
+        data: IRiskAssessmentDisplay;
+        timestamp: number;
+        expiresAt: number;
+      }>;
+      queue: {
+        data: IUnderwritingQueueItem[];
+        timestamp: number;
+        expiresAt: number;
+      } | null;
+    };
+    metadata: {
+      lastUpdated: number;
+      version: string;
+      pendingOperations: string[];
+    };
+  };
+  ui: {
+    loading: boolean;
+    notificationQueue: Array<Notification & {
+      createdAt: Date;
+      isPersistent: boolean;
+    }>;
+    sidebarOpen: boolean;
+    themeMode: ThemeMode;
+    currentBreakpoint: Breakpoint;
+    breakpointHistory: Breakpoint[];
+    isTransitioning: boolean;
+    themeTransition: {
+      status: 'none' | 'pending' | 'complete';
+      from: ThemeMode | null;
+      to: ThemeMode | null;
+    };
+    activeModals: Modal[];
+  };
 }
 
 /**

@@ -5,19 +5,15 @@
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import retry from 'axios-retry';
 import {
   Claim,
   CreateClaimRequest,
   UpdateClaimStatusRequest,
-  ClaimDocument,
-  ClaimValidationError
 } from '../../types/claims.types';
 import { claimsService } from '../../services/claims.service';
 import {
   CLAIM_STATUS,
   CLAIM_DOCUMENT_TYPES,
-  SECURITY_CONSTANTS
 } from '../../constants/claims.constants';
 
 // Action type constants
@@ -60,11 +56,7 @@ export const fetchClaimsAsync = createAsyncThunk(
       const response = await claimsService.fetchClaims(
         filters,
         pagination.page,
-        pagination.pageSize,
-        {
-          sortBy: pagination.sortBy,
-          sortOrder: pagination.sortOrder
-        }
+        pagination.pageSize
       );
 
       return response;
@@ -81,7 +73,7 @@ export const fetchClaimDetailsAsync = createAsyncThunk(
   `${ACTION_PREFIX}/fetchClaimDetails`,
   async (claimId: string, { rejectWithValue }) => {
     try {
-      const response = await claimsService.fetchClaimDetails(claimId);
+      const response = await claimsService.getClaimById(claimId);
       return response;
     } catch (error) {
       return rejectWithValue(error);
@@ -115,7 +107,7 @@ export const updateClaimStatusAsync = createAsyncThunk(
   ) => {
     try {
       const { claimId, updateData } = params;
-      const response = await claimsService.updateStatus(claimId, updateData);
+      const response = await claimsService.updateClaimStatus(claimId, updateData);
       return response;
     } catch (error) {
       return rejectWithValue(error);
@@ -138,12 +130,11 @@ export const uploadClaimDocumentAsync = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const { claimId, file, documentType, onProgress } = params;
+      const { claimId, file, documentType } = params;
       const response = await claimsService.uploadDocument(
         claimId,
         file,
-        documentType,
-        onProgress
+        documentType
       );
       return response;
     } catch (error) {

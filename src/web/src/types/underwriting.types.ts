@@ -5,7 +5,6 @@
  */
 
 import { POLICY_TYPES as PolicyType } from '../constants/policy.constants';
-import type { UUID } from 'crypto'; // ^1.0.0
 
 /**
  * Enum defining all possible underwriting review statuses
@@ -31,11 +30,21 @@ export enum RiskSeverity {
 }
 
 /**
+ * Enum defining risk trend indicators
+ * Used to show directional changes in risk assessments
+ */
+export enum IRiskTrend {
+    IMPROVING = 'IMPROVING',
+    STABLE = 'STABLE',
+    DETERIORATING = 'DETERIORATING'
+}
+
+/**
  * Interface for displaying comprehensive risk assessment data
  * Supports automated underwriting workflows with tracking and accountability
  */
 export interface IRiskAssessmentDisplay {
-    policyId: UUID;
+    policyId: string;
     riskScore: number;
     severity: RiskSeverity;
     factors: IRiskFactorDisplay[];
@@ -65,7 +74,7 @@ export interface IRiskFactorDisplay {
  * Enables priority-based workflow management and status tracking
  */
 export interface IUnderwritingQueueItem {
-    policyId: UUID;
+    policyId: string;
     policyType: PolicyType;
     status: UnderwritingStatus;
     riskScore: number;
@@ -79,7 +88,7 @@ export interface IUnderwritingQueueItem {
  * Captures and validates underwriting decisions with supporting documentation
  */
 export interface IUnderwritingDecisionForm {
-    policyId: UUID;
+    policyId: string;
     decision: UnderwritingStatus;
     notes: string;
     conditions: string[];

@@ -20,7 +20,11 @@ interface TimelineEvent {
   type: string;
   description: string;
   status?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: {
+    premiumChange?: number;
+    policyNumber?: string;
+    changes?: Record<string, unknown>;
+  };
   importance: EventImportance;
 }
 
@@ -33,8 +37,8 @@ interface PolicyTimelineProps {
 }
 
 // Function to determine event dot color based on type and importance
-const getEventDotColor = (eventType: string, importance: EventImportance): string => {
-  const colorMap: Record<string, Record<EventImportance, string>> = {
+const getEventDotColor = (eventType: string, importance: EventImportance): "error" | "success" | "primary" | "secondary" | "inherit" | "grey" | "warning" | "info" => {
+  const colorMap: Record<string, Record<EventImportance, "error" | "success" | "primary" | "secondary" | "inherit" | "grey" | "warning" | "info">> = {
     status: {
       [EventImportance.HIGH]: 'error',
       [EventImportance.MEDIUM]: 'warning',
@@ -171,7 +175,7 @@ const PolicyTimeline: React.FC<PolicyTimelineProps> = ({
               <Typography variant="body1" sx={{ mt: 0.5 }}>
                 {event.description}
               </Typography>
-              {event.metadata?.premiumChange && (
+              {event.metadata?.premiumChange !== undefined && (
                 <Typography 
                   variant="body2" 
                   color={event.metadata.premiumChange > 0 ? 'error' : 'success'}

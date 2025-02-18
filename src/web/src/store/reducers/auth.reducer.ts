@@ -5,18 +5,11 @@
  */
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import {
-  AuthState,
-  User,
-  AuthResponse,
-  AuthError,
-  AuthStatus
-} from '../../types/auth.types';
+import { AuthState } from '../../types/auth.types';
 import {
   loginUser,
   verifyMFACode,
-  refreshUserSession,
-  logoutUser
+  refreshUserSession
 } from '../actions/auth.actions';
 
 // Security event interface for audit logging
@@ -84,9 +77,10 @@ const authSlice = createSlice({
       const newState = action.payload;
       // Validate state before sync
       if (newState.status && typeof newState.loading === 'boolean') {
-        state.status = newState.status;
-        state.user = newState.user;
-        state.error = newState.error;
+        Object.assign(state, {
+          ...newState,
+          securityEvents: state.securityEvents
+        });
         state.securityEvents.push({
           timestamp: Date.now(),
           type: 'STATE_SYNCED',
@@ -109,9 +103,11 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.status = action.payload.requiresMFA ? 'mfa_required' : 'authenticated';
-        state.sessionTimeout = 3600000; // 1 hour
+        Object.assign(state, {
+          user: action.payload.user,
+          status: action.payload.requiresMFA ? 'mfa_required' : 'authenticated',
+          sessionTimeout: 3600000 // 1 hour
+        });
         state.lastActivity = Date.now();
         state.securityEvents.push({
           timestamp: Date.now(),
@@ -149,8 +145,10 @@ const authSlice = createSlice({
       })
       .addCase(verifyMFACode.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.status = 'authenticated';
+        Object.assign(state, {
+          user: action.payload.user,
+          status: 'authenticated'
+        });
         state.securityEvents.push({
           timestamp: Date.now(),
           type: 'MFA_VERIFICATION_SUCCESSFUL',
@@ -203,20 +201,6 @@ const authSlice = createSlice({
           details: { error: state.error }
         });
       })
-
-    // Logout flow
-    builder
-      .addCase(logoutUser.fulfilled, (state) => {
-        state.status = 'unauthenticated';
-        state.user = null;
-        state.sessionTimeout = null;
-        state.error = null;
-        state.securityEvents.push({
-          timestamp: Date.now(),
-          type: 'LOGOUT_SUCCESSFUL',
-          details: {}
-        });
-      });
   }
 });
 

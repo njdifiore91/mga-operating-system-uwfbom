@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/layout/AuthLayout';
 import LoginForm from '../../components/auth/LoginForm';
 import { useAuth } from '../../hooks/useAuth';
+import { AuthError } from '../../types/auth.types';
+
+// Define SecurityEvent type
+interface SecurityEvent {
+  type: 'SUSPICIOUS_ACTIVITY' | 'SESSION_EXPIRED' | 'AUTH_ERROR';
+  severity?: 'low' | 'medium' | 'high';
+  message?: string;
+}
 
 /**
  * Enhanced login page component implementing OAuth 2.0 authentication,
@@ -13,8 +21,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { 
     isAuthenticated, 
-    authState, 
-    login 
+    authState
   } = useAuth();
 
   // Redirect authenticated users to dashboard
@@ -31,8 +38,8 @@ const LoginPage: React.FC = () => {
 
     // Monitor suspicious activities
     const securityMonitor = (event: Event) => {
-      if (event instanceof SecurityEvent) {
-        handleSecurityEvent(event);
+      if (event instanceof CustomEvent && 'detail' in event) {
+        handleSecurityEvent(event.detail as SecurityEvent);
       }
     };
 
@@ -58,7 +65,7 @@ const LoginPage: React.FC = () => {
         // Handle MFA flow
         navigate('/mfa', { 
           state: { 
-            sessionToken: authState.sessionToken 
+            sessionToken: authState.user?.id || ''
           }
         });
       }
@@ -70,7 +77,7 @@ const LoginPage: React.FC = () => {
         message: 'Session validation failed'
       });
     }
-  }, [authState.status, authState.sessionToken, navigate]);
+  }, [authState.status, authState.user?.id, navigate]);
 
   /**
    * Processes security events and triggers appropriate responses

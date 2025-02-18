@@ -1,19 +1,17 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Card,
   CardContent,
   Grid,
   Typography,
   Button,
-  Divider,
   Box,
   Skeleton
 } from '@mui/material'; // v5.14.x
 import { useAuditLogger } from '@mga-os/audit'; // v1.0.x
 import { SecurityWrapper } from '@mga-os/security'; // v1.0.x
 
-import { Claim } from '../../types/claims.types';
-import { CLAIM_STATUS, CLAIM_STATUS_LABELS } from '../../constants/claims.constants';
+import { CLAIM_STATUS, CLAIM_STATUS_LABELS, CLAIM_STATUS_TRANSITIONS } from '../../constants/claims.constants';
 import ErrorBoundary from '../common/ErrorBoundary';
 
 /**
@@ -190,7 +188,7 @@ const ClaimDetails: React.FC<ClaimDetailsProps> = ({
                       Claim #{claim.claimNumber}
                     </Typography>
                     <Typography color="textSecondary">
-                      Status: {CLAIM_STATUS_LABELS[claim.status]}
+                      Status: {CLAIM_STATUS_LABELS[claim.status as keyof typeof CLAIM_STATUS]}
                     </Typography>
                   </Grid>
                   <Grid item>
@@ -249,7 +247,7 @@ const ClaimDetails: React.FC<ClaimDetailsProps> = ({
                   Actions
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  {CLAIM_STATUS_TRANSITIONS[claim.status].map((status) => (
+                  {CLAIM_STATUS_TRANSITIONS[claim.status as keyof typeof CLAIM_STATUS].map((status: keyof typeof CLAIM_STATUS) => (
                     <Button
                       key={status}
                       variant="contained"

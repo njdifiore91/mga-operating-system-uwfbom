@@ -40,7 +40,7 @@ const Notification: React.FC<NotificationProps> = ({
    * Handle notification close events with accessibility cleanup
    */
   const handleClose = useCallback((
-    event: React.SyntheticEvent | null,
+    _: React.SyntheticEvent<any> | Event,
     reason?: string
   ) => {
     // Prevent closing on clickaway for better accessibility

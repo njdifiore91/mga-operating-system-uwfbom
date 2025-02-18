@@ -26,19 +26,21 @@ const RedirectIfAuthenticated: React.FC<{ children: React.ReactNode }> = ({ chil
  * @version 1.0.0
  */
 const PublicRoutes: React.FC = () => {
-  const { validateSession } = useAuth();
+  const { authState } = useAuth();
 
-  // Set up security monitoring and session validation
+  // Set up security monitoring
   useEffect(() => {
-    // Validate session state on route changes
-    const validateRouteAccess = () => {
-      validateSession();
+    // Monitor route changes for security
+    const handleRouteChange = () => {
+      // Update last activity timestamp
+      if (authState.status === 'authenticated') {
+        window.dispatchEvent(new CustomEvent('userActivity'));
+      }
     };
 
-    // Monitor route changes for security
-    window.addEventListener('popstate', validateRouteAccess);
-    return () => window.removeEventListener('popstate', validateRouteAccess);
-  }, [validateSession]);
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, [authState.status]);
 
   return (
     <ErrorBoundary

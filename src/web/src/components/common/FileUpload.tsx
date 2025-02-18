@@ -24,7 +24,12 @@ interface FileUploadProps {
   ariaLabel?: string;
 }
 
-const validateFile = (file: File, props: FileUploadProps): ValidationResult => {
+interface FileValidationProps {
+  acceptedTypes: string[];
+  maxSize?: number;
+}
+
+const validateFile = (file: File, props: FileValidationProps): ValidationResult => {
   const errors: Record<string, string[]> = {};
 
   // Check if file exists

@@ -14,7 +14,7 @@ import {
   Divider
 } from '@mui/material';
 import {
-  NotificationsIcon,
+  Notifications,
   AccountCircle,
   Menu as MenuIcon,
   ExitToApp
@@ -32,7 +32,6 @@ interface TopbarProps {
   onMenuClick?: () => void;
   className?: string;
   enableNotifications?: boolean;
-  customTheme?: any;
 }
 
 /**
@@ -47,19 +46,16 @@ const Topbar: React.FC<TopbarProps> = ({
   isMobile = false,
   onMenuClick,
   className = '',
-  enableNotifications = true,
-  customTheme
+  enableNotifications = true
 }) => {
   // Hooks
   const theme = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, logout } = useAuth();
   const { notification, hideNotification } = useNotification();
   
   // Responsive breakpoints
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   // State management
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -178,7 +174,7 @@ const Topbar: React.FC<TopbarProps> = ({
               onClick={handleNotificationClick}
             >
               <Badge badgeContent={notification ? 1 : 0} color="error">
-                <NotificationsIcon />
+                <Notifications />
               </Badge>
             </IconButton>
           )}

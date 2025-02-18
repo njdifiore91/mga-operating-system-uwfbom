@@ -15,17 +15,15 @@ import {
   IconButton,
   Alert,
   Tooltip
-} from '@mui/material'; // ^5.14.x
+} from '@mui/material';
 import {
-  CloudUpload as CloudUploadIcon,
   Cancel as CancelIcon,
-  Error as ErrorIcon,
   CheckCircle as CheckCircleIcon,
   Lock as LockIcon
-} from '@mui/icons-material'; // ^5.14.x
+} from '@mui/icons-material';
 import { FileUpload } from '../common/FileUpload';
 import { DocumentService } from '../../services/documents.service';
-import { SecurityService } from '@mga/security'; // ^1.0.0
+import { SecurityService } from '@mga/security';
 import {
   DocumentType,
   DocumentStatus,
@@ -36,7 +34,6 @@ import {
 // Constants for document upload configuration
 const ACCEPTED_FILE_TYPES = ['.pdf', '.docx', '.jpg', '.png', '.tiff'];
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
-const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
 const ENCRYPTION_ALGORITHM = 'AES-256-GCM';
 const RETRY_ATTEMPTS = 3;
 
@@ -223,7 +220,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
               <Typography variant="body2" sx={{ flex: 1 }}>
                 {isEncrypting ? 'Encrypting...' : `Uploading: ${uploadState.progress}%`}
               </Typography>
-              {uploadState.status === DocumentStatus.UPLOADING && (
+              {uploadState.status === DocumentStatus.PROCESSING && (
                 <IconButton
                   size="small"
                   onClick={handleCancel}

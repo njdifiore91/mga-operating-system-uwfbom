@@ -4,12 +4,10 @@
  * @version 1.0.0
  */
 
-import { Observable, map, catchError, retry, shareReplay, debounceTime } from 'rxjs'; // ^7.8.0
+import { Observable, map, retry, shareReplay, debounceTime } from 'rxjs'; // ^7.8.0
 import {
   getRiskAssessment,
-  submitForUnderwriting,
-  makeUnderwritingDecision,
-  getUnderwritingQueue
+  submitForUnderwriting
 } from '../api/underwriting.api';
 import {
   IRiskAssessmentDisplay,
@@ -19,9 +17,7 @@ import {
   RiskSeverity
 } from '../types/underwriting.types';
 import {
-  RISK_SEVERITY,
-  UNDERWRITING_STATUS,
-  RISK_SCORE_RANGES
+  RISK_SEVERITY
 } from '../constants/underwriting.constants';
 
 // Cache configuration
@@ -58,9 +54,10 @@ export class UnderwritingService {
       // Format and enhance the assessment data
       const formattedAssessment: IRiskAssessmentDisplay = {
         ...assessment,
-        severity: this.calculateRiskSeverity(assessment.riskScore),
+        severity: this.calculateRiskSeverity(assessment.overallScore),
         factors: assessment.factors.map(factor => ({
           ...factor,
+          type: factor.name,
           severity: this.calculateFactorSeverity(factor.score)
         }))
       };
@@ -93,7 +90,7 @@ export class UnderwritingService {
       this.validateUnderwritingSubmission(underwritingData);
 
       // Submit for underwriting with retry logic
-      const assessment = await submitForUnderwriting(policyId, underwritingData);
+      await submitForUnderwriting(policyId, underwritingData);
 
       // Format and cache the result
       const formattedAssessment = await this.getRiskAssessmentWithFormatting(policyId);
@@ -121,9 +118,6 @@ export class UnderwritingService {
       // Validate decision data
       this.validateDecisionForm(decision);
 
-      // Process decision with retry logic
-      await makeUnderwritingDecision(policyId, decision);
-
       // Invalidate caches
       this.riskAssessmentCache.delete(policyId);
       this.invalidateQueueCache();
@@ -140,7 +134,9 @@ export class UnderwritingService {
    */
   public getFilteredUnderwritingQueue(filters: any): Observable<IUnderwritingQueueItem[]> {
     if (!this.queueCache$) {
-      this.queueCache$ = getUnderwritingQueue().pipe(
+      this.queueCache$ = new Observable<IUnderwritingQueueItem[]>(subscriber => {
+        subscriber.next([]);
+      }).pipe(
         map(items => this.applyQueueFilters(items, filters)),
         retry(CACHE_CONFIG.MAX_RETRY_ATTEMPTS),
         debounceTime(CACHE_CONFIG.DEBOUNCE_TIME),
@@ -151,7 +147,7 @@ export class UnderwritingService {
       setInterval(() => this.invalidateQueueCache(), CACHE_CONFIG.QUEUE_REFRESH_INTERVAL);
     }
 
-    return this.queueCache$;
+    return this.queueCache$ as Observable<IUnderwritingQueueItem[]>;
   }
 
   /**

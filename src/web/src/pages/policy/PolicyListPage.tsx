@@ -21,11 +21,9 @@ const PolicyListPage: React.FC = React.memo(() => {
 
   // Initialize enhanced policy management hook with caching
   const {
-    policies,
     loading,
     error,
     totalPolicies,
-    fetchPolicies,
     refreshPolicies
   } = usePolicies({
     autoFetch: true,
@@ -86,13 +84,13 @@ const PolicyListPage: React.FC = React.memo(() => {
               color="inherit"
               size="small"
               onClick={handleRetry}
-              disabled={loading}
+              disabled={Boolean(loading)}
             >
               Retry
             </Button>
           }
         >
-          {error}
+          {error.toString()}
         </Alert>
       </Box>
     );
@@ -143,7 +141,7 @@ const PolicyListPage: React.FC = React.memo(() => {
             }}
             refreshInterval={30000}
           />
-          {loading && (
+          {Boolean(loading) && (
             <Box
               position="absolute"
               top={0}

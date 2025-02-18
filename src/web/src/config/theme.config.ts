@@ -18,6 +18,9 @@ export interface ThemeConfig extends Theme {
       hover: string;
       active: string;
     };
+    background: {
+      elevated: string;
+    };
   };
 }
 
@@ -32,16 +35,16 @@ export const defaultThemeConfig: ThemeOptions = {
       light: '#3399FF',
       dark: '#004C99',
       contrastText: '#FFFFFF',
-      hover: '#0052A3',
-      active: '#003D7A',
+      hover: '#0052A3' as any,
+      active: '#003D7A' as any,
     },
     secondary: {
       main: '#666666',
       light: '#999999',
       dark: '#333333',
       contrastText: '#FFFFFF',
-      hover: '#737373',
-      active: '#595959',
+      hover: '#737373' as any,
+      active: '#595959' as any,
     },
     error: {
       main: '#DC3545',
@@ -70,7 +73,7 @@ export const defaultThemeConfig: ThemeOptions = {
     background: {
       default: '#FFFFFF',
       paper: '#F5F5F5',
-      elevated: '#FFFFFF',
+      elevated: '#FFFFFF' as any,
     },
     text: {
       primary: '#333333',

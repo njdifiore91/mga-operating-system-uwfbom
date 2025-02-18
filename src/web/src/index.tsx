@@ -1,7 +1,7 @@
-import React, { StrictMode } from 'react'; // v18.2.0
+import { StrictMode } from 'react'; // v18.2.0
 import { createRoot } from 'react-dom/client'; // v18.2.0
-import { init as initSentry } from '@sentry/react'; // v7.x.x
-import { PerformanceMonitor } from '@performance-monitor/react'; // v1.x.x
+import { init as initSentry, BrowserTracing } from '@sentry/react'; // v7.x.x
+import { PerformanceMonitor } from '@mga/performance-monitoring'; // v1.x.x
 
 import App from './App';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'production') {
     environment: process.env.NODE_ENV,
     tracesSampleRate: 0.1,
     integrations: [
-      new Sentry.BrowserTracing({
+      new BrowserTracing({
         tracingOrigins: ['localhost', /^\//],
       }),
     ],
@@ -118,6 +118,14 @@ const initializeApp = (): void => {
 initializeApp();
 
 // Enable hot module replacement in development
+declare global {
+  interface NodeModule {
+    hot?: {
+      accept(path: string, callback: () => void): void;
+    };
+  }
+}
+
 if (process.env.NODE_ENV === 'development' && module.hot) {
   module.hot.accept('./App', () => {
     initializeApp();

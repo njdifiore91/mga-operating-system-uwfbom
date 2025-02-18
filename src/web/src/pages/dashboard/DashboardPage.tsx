@@ -1,39 +1,15 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
-import { useWebSocket } from 'react-use-websocket';
+import useWebSocket from 'react-use-websocket';
 import { useNetworkStatus } from '@react-hooks/network-status';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
-
-// Decorators for error handling and telemetry
-const withErrorBoundary = (Component: React.FC) => (props: any) => (
-  <ErrorBoundary>
-    <Component {...props} />
-  </ErrorBoundary>
-);
-
-const withTelemetry = (Component: React.FC) => (props: any) => {
-  useEffect(() => {
-    // Initialize performance monitoring
-    performance.mark('dashboard-render-start');
-    return () => {
-      performance.mark('dashboard-render-end');
-      performance.measure(
-        'dashboard-render',
-        'dashboard-render-start',
-        'dashboard-render-end'
-      );
-    };
-  }, []);
-
-  return <Component {...props} />;
-};
+import ErrorBoundary from '../../components/common/ErrorBoundary';
 
 // Props interface
 interface DashboardPageProps {
   className?: string;
   wsEndpoint?: string;
-  refreshInterval?: number;
 }
 
 // MetricsData interface for WebSocket updates
@@ -49,8 +25,7 @@ interface MetricsData {
  */
 const DashboardPage: React.FC<DashboardPageProps> = ({
   className = '',
-  wsEndpoint = `${process.env.REACT_APP_WS_BASE_URL}/metrics`,
-  refreshInterval = 30000
+  wsEndpoint = `${process.env.REACT_APP_WS_BASE_URL}/metrics`
 }) => {
   // Theme and responsive hooks
   const theme = useTheme();
@@ -64,7 +39,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
 
   // WebSocket connection for real-time updates
   const { lastMessage, readyState } = useWebSocket(wsEndpoint, {
-    shouldReconnect: (closeEvent) => true,
+    shouldReconnect: () => true,
     reconnectAttempts: 5,
     reconnectInterval: 3000
   });
@@ -126,7 +101,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   return (
     <DashboardLayout>
       <Container
-        maxWidth={layoutConfig.maxWidth}
+        maxWidth={layoutConfig.maxWidth as any}
         sx={{
           padding: layoutConfig.padding,
           marginTop: layoutConfig.marginTop
@@ -143,7 +118,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         >
           <AnalyticsDashboard
             className="dashboard-analytics"
-            onDataUpdate={updateMetricsCache}
             offlineMode={offlineMode}
           />
         </Box>
@@ -152,7 +126,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   );
 };
 
-// Apply decorators
-const EnhancedDashboardPage = withTelemetry(withErrorBoundary(DashboardPage));
+// Apply error boundary
+const EnhancedDashboardPage = (props: DashboardPageProps) => (
+  <ErrorBoundary>
+    <DashboardPage {...props} />
+  </ErrorBoundary>
+);
 
 export default EnhancedDashboardPage;

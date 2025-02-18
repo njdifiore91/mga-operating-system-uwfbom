@@ -37,6 +37,47 @@ export interface ComplianceMetrics {
 }
 
 /**
+ * Interface combining all dashboard metrics
+ */
+export interface DashboardMetrics {
+  policy: PolicyMetrics;
+  underwriting: UnderwritingMetrics;
+  compliance: ComplianceMetrics;
+}
+
+/**
+ * Interface for metric definition configuration
+ */
+export interface MetricDefinition {
+  key: string;
+  name: string;
+  description: string;
+  unit: string;
+  category: string;
+  aggregationType: 'sum' | 'average' | 'count' | 'last';
+  thresholds?: MetricThreshold;
+}
+
+/**
+ * Interface for anomaly detection configuration
+ */
+export interface AnomalyConfig {
+  enabled: boolean;
+  sensitivityLevel: 'low' | 'medium' | 'high';
+  baselinePeriod: number;
+  deviationThreshold: number;
+}
+
+/**
+ * Type for trend analysis period configuration
+ */
+export interface TrendPeriod {
+  duration: number;
+  unit: 'hour' | 'day' | 'week' | 'month' | 'year';
+  comparisonOffset: number;
+}
+
+/**
  * Interface for analyzing metric trends and changes over time
  */
 export interface MetricTrend {

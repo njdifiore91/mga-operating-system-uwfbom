@@ -1,5 +1,4 @@
-import { rest, ResponseResolver, HttpResponse } from 'msw';
-import type { PathParams } from 'msw';
+import { rest } from 'msw';
 import { 
   IPolicy, 
   PolicyType, 
@@ -10,7 +9,8 @@ import {
 } from '../../src/types/claims.types';
 import { 
   IRiskAssessmentDisplay, 
-  UnderwritingStatus 
+  UnderwritingStatus,
+  RiskSeverity 
 } from '../../src/types/underwriting.types';
 import type { 
   ApiResponse 
@@ -74,12 +74,12 @@ const generateMockClaim = (id: string): Claim => ({
 const generateMockRiskAssessment = (policyId: string): IRiskAssessmentDisplay => ({
   policyId,
   riskScore: 85,
-  severity: 'LOW',
+  severity: RiskSeverity.LOW,
   factors: [
     {
       type: 'LOCATION',
       score: 85,
-      severity: 'LOW',
+      severity: RiskSeverity.LOW,
       details: {
         description: 'Location risk assessment',
         impact: 'Low risk area',
@@ -96,9 +96,9 @@ const generateMockRiskAssessment = (policyId: string): IRiskAssessmentDisplay =>
 // Policy Handlers
 export const policyHandlers = [
   // GET /api/policies - List policies with pagination
-  rest.get('/api/policies', async (req, res, ctx) => {
-    const page = Number(req.url.searchParams.get('page')) || 1;
-    const limit = Number(req.url.searchParams.get('limit')) || 10;
+  rest.get('/api/policies', async (_, res, ctx) => {
+    const page = Number(_.url.searchParams.get('page')) || 1;
+    const limit = Number(_.url.searchParams.get('limit')) || 10;
     
     const mockPolicies = Array(limit).fill(null).map((_, i) => 
       generateMockPolicy(`${page}-${i}`)
@@ -138,7 +138,7 @@ export const policyHandlers = [
   }),
 
   // POST /api/policies - Create policy
-  rest.post('/api/policies', async (req, res, ctx) => {
+  rest.post('/api/policies', async (_, res, ctx) => {
     // Simulate OneShield integration delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
@@ -158,7 +158,7 @@ export const policyHandlers = [
 // Claims Handlers
 export const claimHandlers = [
   // GET /api/claims - List claims
-  rest.get('/api/claims', async (req, res, ctx) => {
+  rest.get('/api/claims', async (_, res, ctx) => {
     const mockClaims = Array(10).fill(null).map((_, i) => 
       generateMockClaim(i.toString())
     );
@@ -177,7 +177,7 @@ export const claimHandlers = [
   }),
 
   // POST /api/claims - Create claim
-  rest.post('/api/claims', async (req, res, ctx) => {
+  rest.post('/api/claims', async (_, res, ctx) => {
     const response: ApiResponse<Claim> = {
       success: true,
       data: generateMockClaim(Math.random().toString(36).substring(7)),
@@ -212,7 +212,7 @@ export const underwritingHandlers = [
   }),
 
   // POST /api/underwriting/submit
-  rest.post('/api/underwriting/submit', async (req, res, ctx) => {
+  rest.post('/api/underwriting/submit', async (_, res, ctx) => {
     const response: ApiResponse<{ status: UnderwritingStatus }> = {
       success: true,
       data: {

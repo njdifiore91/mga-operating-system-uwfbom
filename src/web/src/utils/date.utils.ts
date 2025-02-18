@@ -5,8 +5,8 @@
  * @version 1.0.0
  */
 
-import { format, parse, addMonths, isValid, differenceInDays } from 'date-fns'; // v2.30.x
-import { Timestamp, DateRange } from '../types/common.types';
+import { format, parse, isValid, differenceInDays } from 'date-fns'; // v2.30.x
+import { DateRange } from '../types/common.types';
 
 // Constants for date formatting and validation
 const DEFAULT_DATE_FORMAT = 'yyyy-MM-dd';

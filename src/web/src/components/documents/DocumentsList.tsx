@@ -9,27 +9,25 @@ import {
   Skeleton 
 } from '@mui/material';
 import { 
-  DownloadIcon, 
-  DeleteIcon, 
-  MoreVertIcon, 
-  LockIcon, 
-  SecurityIcon 
+  Downloading, 
+  Delete, 
+  MoreVert, 
+  Lock, 
+  Security 
 } from '@mui/icons-material';
 import DataGrid from '../common/DataGrid';
 import { useDocuments } from '../../hooks/useDocuments';
 import { 
   IDocument, 
   DocumentType, 
-  DocumentStatus, 
-  SecurityClassification 
+  DocumentStatus
 } from '../../types/documents.types';
 
 interface DocumentsListProps {
   policyId?: string;
   documentType?: DocumentType;
   onDocumentSelect?: (document: IDocument) => void;
-  securityLevel?: SecurityClassification;
-  enableBulkActions?: boolean;
+  securityLevel?: string;
   onError?: (error: Error) => void;
 }
 
@@ -37,8 +35,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
   policyId,
   documentType,
   onDocumentSelect,
-  securityLevel = SecurityClassification.STANDARD,
-  enableBulkActions = false,
+  securityLevel = 'STANDARD',
   onError
 }) => {
   // State for action menu
@@ -51,7 +48,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
     isLoading,
     error,
     uploadState,
-    downloadDocument,
+    getDownloadUrl,
     deleteDocument
   } = useDocuments({
     policyId,
@@ -74,12 +71,12 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
   // Handle document download with security checks
   const handleDownload = useCallback(async (document: IDocument) => {
     try {
-      await downloadDocument(document.id);
+      await getDownloadUrl(document.id);
       handleMenuClose();
     } catch (error) {
       onError?.(error as Error);
     }
-  }, [downloadDocument, handleMenuClose, onError]);
+  }, [getDownloadUrl, handleMenuClose, onError]);
 
   // Handle document deletion with confirmation
   const handleDelete = useCallback(async (document: IDocument) => {
@@ -99,16 +96,16 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
       field: 'fileName',
       headerName: 'Document Name',
       flex: 2,
-      renderCell: (params: any) => (
+      renderCell: (params: { row: IDocument; value: string }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {params.row.isEncrypted && (
             <Tooltip title="Encrypted Document">
-              <LockIcon fontSize="small" color="primary" />
+              <Lock fontSize="small" color="primary" />
             </Tooltip>
           )}
-          {params.row.securityClassification !== SecurityClassification.PUBLIC && (
+          {params.row.securityClassification !== 'PUBLIC' && (
             <Tooltip title={`Security Level: ${params.row.securityClassification}`}>
-              <SecurityIcon fontSize="small" color="warning" />
+              <Security fontSize="small" color="warning" />
             </Tooltip>
           )}
           {params.value}
@@ -131,7 +128,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
       field: 'status',
       headerName: 'Status',
       flex: 1,
-      renderCell: (params: any) => {
+      renderCell: (params: { row: IDocument; value: DocumentStatus }) => {
         const uploadProgress = uploadState.get(params.row.fileName)?.progress;
         if (params.value === DocumentStatus.PROCESSING && uploadProgress !== undefined) {
           return (
@@ -149,14 +146,14 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
       headerName: 'Actions',
       flex: 1,
       sortable: false,
-      renderCell: (params: any) => (
+      renderCell: (params: { row: IDocument }) => (
         <>
           <IconButton
             aria-label="document actions"
             onClick={(e) => handleMenuOpen(e, params.row)}
             size="small"
           >
-            <MoreVertIcon />
+            <MoreVert />
           </IconButton>
           <Menu
             anchorEl={anchorEl}
@@ -167,14 +164,14 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
               onClick={() => handleDownload(params.row)}
               disabled={params.row.status !== DocumentStatus.COMPLETED}
             >
-              <DownloadIcon fontSize="small" sx={{ mr: 1 }} />
+              <Downloading fontSize="small" sx={{ mr: 1 }} />
               Download
             </MenuItem>
             <MenuItem 
               onClick={() => handleDelete(params.row)}
               disabled={!params.row.status || params.row.status === DocumentStatus.DELETED}
             >
-              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              <Delete fontSize="small" sx={{ mr: 1 }} />
               Delete
             </MenuItem>
           </Menu>
@@ -221,16 +218,15 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
         sortOrder: 'desc'
       }}
       onPaginationChange={() => {}}
-      disableSelectionOnClick
       autoHeight
-      getRowId={(row) => row.id}
+      getRowId={(row: IDocument) => row.id}
       ariaLabel="Documents list"
       sx={{
         '& .MuiDataGrid-row': {
           cursor: onDocumentSelect ? 'pointer' : 'default'
         }
       }}
-      onRowClick={onDocumentSelect ? (params) => onDocumentSelect(params.row) : undefined}
+      onRowClick={onDocumentSelect ? (params: { row: IDocument }) => onDocumentSelect(params.row) : undefined}
     />
   );
 };

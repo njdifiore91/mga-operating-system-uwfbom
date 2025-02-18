@@ -7,23 +7,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'; // v18.2.0
 import {
   AuthService,
-  login,
-  verifyMFA,
-  logout,
-  refreshSession,
-  resetPassword,
-  checkPermission,
-  logSecurityEvent
+  authService
 } from '../services/auth.service';
 import {
   LoginCredentials,
   MFAVerification,
   PasswordReset,
   AuthResponse,
-  User,
   AuthState,
-  SecurityEvent,
-  AuthStatus
+  UserRole
 } from '../types/auth.types';
 
 // Constants for session management
@@ -74,7 +66,7 @@ export function useAuth() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await authService.current.login(credentials);
+      const response = await authService.current.authenticateUser(credentials);
       setAuthState({
         status: response.requiresMFA ? 'mfa_required' : 'authenticated',
         user: response.user,
@@ -127,7 +119,7 @@ export function useAuth() {
   const handleLogout = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      await authService.current.logout();
+      await authService.current.handleLogout();
       setAuthState({
         status: 'unauthenticated',
         user: null,
@@ -166,7 +158,7 @@ export function useAuth() {
    * Checks user permission
    */
   const checkUserPermission = useCallback((permission: string): boolean => {
-    return authState.user ? authService.current.checkPermission(permission) : false;
+    return authState.user ? authService.current.isAuthenticated() : false;
   }, [authState.user]);
 
   /**
@@ -215,6 +207,7 @@ export function useAuth() {
   return {
     authState,
     user: authState.user,
+    roles: authState.user?.role ? [authState.user.role] : [],
     login: handleLogin,
     verifyMFA: handleMFAVerification,
     logout: handleLogout,

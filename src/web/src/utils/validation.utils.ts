@@ -88,7 +88,7 @@ export const validateEmail = (
   email: string,
   options: EmailValidationOptions = {}
 ): ValidationResult => {
-  const { required = true, allowedDomains, checkDNS, customMessage } = options;
+  const { required = true, allowedDomains, customMessage } = options;
   const errors: string[] = [];
 
   // Required check
@@ -133,7 +133,7 @@ export const validateDateRange = (
   endDate: Date,
   options: DateRangeOptions = {}
 ): ValidationResult => {
-  const { required = true, minDate, maxDate, businessDaysOnly, customMessage } = options;
+  const { required = true, minDate, maxDate, customMessage } = options;
   const errors: string[] = [];
 
   if (!startDate || !endDate) {
@@ -183,7 +183,6 @@ export const validateCurrency = (
     minAmount = 0,
     maxAmount,
     allowNegative = false,
-    currency = 'USD',
     customMessage
   } = options;
   const errors: string[] = [];
