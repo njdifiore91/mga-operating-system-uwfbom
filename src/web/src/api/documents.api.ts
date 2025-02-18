@@ -123,7 +123,7 @@ const uploadDocument = async (
     );
 
     return response.data;
-  } catch (error: unknown) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     throw new Error(`Document upload failed: ${errorMessage}`);
   }
@@ -153,7 +153,7 @@ const downloadDocument = async (
     );
 
     return response.data;
-  } catch (error: unknown) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     throw new Error(`Document download failed: ${errorMessage}`);
   }
@@ -185,7 +185,7 @@ const getDocuments = async (
     });
 
     return response.data;
-  } catch (error: unknown) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     throw new Error(`Failed to fetch documents: ${errorMessage}`);
   }
@@ -202,7 +202,7 @@ const getDocumentById = async (documentId: string): Promise<IDocument> => {
       `${DOCUMENTS_API_PATH}/${documentId}`
     );
     return response.data;
-  } catch (error: unknown) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     throw new Error(`Failed to fetch document: ${errorMessage}`);
   }
@@ -216,7 +216,7 @@ const getDocumentById = async (documentId: string): Promise<IDocument> => {
 const deleteDocument = async (documentId: string): Promise<void> => {
   try {
     await apiClient.delete(`${DOCUMENTS_API_PATH}/${documentId}`);
-  } catch (error: unknown) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     throw new Error(`Failed to delete document: ${errorMessage}`);
   }
