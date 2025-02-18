@@ -74,13 +74,15 @@ export class DocumentService {
         {
           ...params,
           securityClassification: securityLevel,
-          retentionPeriod: RETENTION_PERIODS[params.retentionPeriod as keyof typeof RETENTION_PERIODS] || RETENTION_PERIODS.standard
+          retentionPeriod: typeof params.retentionPeriod === 'string' && params.retentionPeriod in RETENTION_PERIODS
+            ? RETENTION_PERIODS[params.retentionPeriod as keyof typeof RETENTION_PERIODS]
+            : RETENTION_PERIODS.standard
         },
         progressHandler
       );
 
       return document;
-    } catch (error: unknown) {
+    } catch (error) {
       throw new Error(`Document upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -123,7 +125,7 @@ export class DocumentService {
         documents: filteredDocuments,
         total: filteredDocuments.length
       };
-    } catch (error: unknown) {
+    } catch (error) {
       throw new Error(`Failed to retrieve documents: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -136,7 +138,7 @@ export class DocumentService {
   public async getDocumentDetails(documentId: string): Promise<IDocument> {
     try {
       return await documentsApi.getDocumentById(documentId);
-    } catch (error: unknown) {
+    } catch (error) {
       throw new Error(`Failed to retrieve document details: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -153,7 +155,7 @@ export class DocumentService {
   ): Promise<Blob> {
     try {
       return await documentsApi.downloadDocument(documentId, onProgress);
-    } catch (error: unknown) {
+    } catch (error) {
       throw new Error(`Document download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -176,7 +178,7 @@ export class DocumentService {
       }
 
       await documentsApi.deleteDocument(documentId);
-    } catch (error: unknown) {
+    } catch (error) {
       throw new Error(`Document deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -200,29 +202,27 @@ export class DocumentService {
 
       // Implementation would call an API endpoint to update classification
       throw new Error('Method not implemented');
-    } catch (error: unknown) {
+    } catch (error) {
       throw new Error(`Failed to update security classification: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Updates document retention policy
-   * @param documentId Document identifier
    * @param retentionPeriod New retention period
    * @returns Promise resolving to updated document
    */
   public async updateRetentionPolicy(
-    documentId: string,
-    retentionPeriod: typeof RETENTION_PERIODS[keyof typeof RETENTION_PERIODS]
+    retentionPeriod: keyof typeof RETENTION_PERIODS
   ): Promise<IDocument> {
     try {
-      if (!Object.values(RETENTION_PERIODS).includes(retentionPeriod)) {
+      if (!(retentionPeriod in RETENTION_PERIODS)) {
         throw new Error('Invalid retention period');
       }
 
       // Implementation would call an API endpoint to update retention policy
       throw new Error('Method not implemented');
-    } catch (error: unknown) {
+    } catch (error) {
       throw new Error(`Failed to update retention policy: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
