@@ -9,10 +9,10 @@ import {
   Skeleton 
 } from '@mui/material';
 import { 
-  Downloading as DownloadIcon, 
-  Delete as DeleteIcon, 
-  MoreVert as MoreVertIcon, 
-  Lock as LockIcon, 
+  Downloading, 
+  Delete, 
+  MoreVert, 
+  Lock, 
   Security 
 } from '@mui/icons-material';
 import DataGrid from '../common/DataGrid';
@@ -28,7 +28,6 @@ interface DocumentsListProps {
   documentType?: DocumentType;
   onDocumentSelect?: (document: IDocument) => void;
   securityLevel?: string;
-  enableBulkActions?: boolean;
   onError?: (error: Error) => void;
 }
 
@@ -97,11 +96,11 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
       field: 'fileName',
       headerName: 'Document Name',
       flex: 2,
-      renderCell: (params: any) => (
+      renderCell: (params: { row: IDocument; value: string }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {params.row.isEncrypted && (
             <Tooltip title="Encrypted Document">
-              <LockIcon fontSize="small" color="primary" />
+              <Lock fontSize="small" color="primary" />
             </Tooltip>
           )}
           {params.row.securityClassification !== 'PUBLIC' && (
@@ -129,7 +128,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
       field: 'status',
       headerName: 'Status',
       flex: 1,
-      renderCell: (params: any) => {
+      renderCell: (params: { row: IDocument; value: DocumentStatus }) => {
         const uploadProgress = uploadState.get(params.row.fileName)?.progress;
         if (params.value === DocumentStatus.PROCESSING && uploadProgress !== undefined) {
           return (
@@ -147,14 +146,14 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
       headerName: 'Actions',
       flex: 1,
       sortable: false,
-      renderCell: (params: any) => (
+      renderCell: (params: { row: IDocument }) => (
         <>
           <IconButton
             aria-label="document actions"
             onClick={(e) => handleMenuOpen(e, params.row)}
             size="small"
           >
-            <MoreVertIcon />
+            <MoreVert />
           </IconButton>
           <Menu
             anchorEl={anchorEl}
@@ -165,14 +164,14 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
               onClick={() => handleDownload(params.row)}
               disabled={params.row.status !== DocumentStatus.COMPLETED}
             >
-              <DownloadIcon fontSize="small" sx={{ mr: 1 }} />
+              <Downloading fontSize="small" sx={{ mr: 1 }} />
               Download
             </MenuItem>
             <MenuItem 
               onClick={() => handleDelete(params.row)}
               disabled={!params.row.status || params.row.status === DocumentStatus.DELETED}
             >
-              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              <Delete fontSize="small" sx={{ mr: 1 }} />
               Delete
             </MenuItem>
           </Menu>
@@ -219,13 +218,15 @@ const DocumentsList: React.FC<DocumentsListProps> = ({
         sortOrder: 'desc'
       }}
       onPaginationChange={() => {}}
+      autoHeight
+      getRowId={(row: IDocument) => row.id}
       ariaLabel="Documents list"
       sx={{
         '& .MuiDataGrid-row': {
           cursor: onDocumentSelect ? 'pointer' : 'default'
         }
       }}
-      onRowClick={onDocumentSelect ? (params) => onDocumentSelect(params.row) : undefined}
+      onRowClick={onDocumentSelect ? (params: { row: IDocument }) => onDocumentSelect(params.row) : undefined}
     />
   );
 };
