@@ -31,18 +31,15 @@ if (process.env.NODE_ENV === 'development') {
 
 // Configure response logging for development and debugging
 if (process.env.NODE_ENV === 'development') {
-  server.events.on('response:mocked', (responseInfo) => {
-    const { status, statusText } = responseInfo;
-    const url = responseInfo.request.url.toString();
+  server.events.on('response:mocked', ({ response: { status, statusText }, request: { url } }) => {
     console.log('MSW mocked response:', {
-      url,
+      url: url.toString(),
       status,
       statusText,
     });
   });
 
-  server.events.on('response:bypass', (responseInfo) => {
-    const { method, url } = responseInfo.request;
+  server.events.on('response:bypass', ({ request: { method, url } }) => {
     console.log('MSW bypassed request:', method, url.toString());
   });
 }
