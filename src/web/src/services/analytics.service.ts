@@ -46,59 +46,6 @@ interface MetricDefinition {
 }
 
 /**
- * Fetches metrics data by category with caching and error handling
- * @param category Category of metrics to fetch
- * @returns Promise resolving to metrics data for the specified category
- */
-export async function fetchMetricsByCategory(
-  category: string
-): Promise<PolicyMetrics | UnderwritingMetrics | ComplianceMetrics> {
-  try {
-    const response = await getMetricsByType(category, {
-      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      endDate: new Date().toISOString()
-    });
-    return response;
-  } catch (error) {
-    console.error(`Failed to fetch metrics for category ${category}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Initializes WebSocket connection for real-time metric updates
- * @returns WebSocket instance for metric updates
- */
-export function initializeWebSocket(): WebSocket {
-  const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/metrics/ws`);
-  
-  ws.onopen = () => {
-    console.log('Analytics WebSocket connection established');
-  };
-
-  ws.onmessage = (event) => {
-    try {
-      const metricUpdate = JSON.parse(event.data);
-      window.dispatchEvent(new CustomEvent('metricUpdate', { detail: metricUpdate }));
-    } catch (error) {
-      console.error('Error processing metric update:', error);
-    }
-  };
-
-  ws.onerror = (error) => {
-    console.error('Analytics WebSocket error:', error);
-  };
-
-  ws.onclose = () => {
-    console.log('Analytics WebSocket connection closed');
-    // Attempt to reconnect after 5 seconds
-    setTimeout(() => initializeWebSocket(), 5000);
-  };
-
-  return ws;
-}
-
-/**
  * Calculates metric trends with anomaly detection and confidence scoring
  * @param historicalData Historical metric data points
  * @param period Trend analysis period
