@@ -82,7 +82,7 @@
     "redux-thunk": "^2.4.2",
     "reselect": "^4.1.0",
     "rxjs": "^7.8.0",
-    "uuid": "^9.0.0",
+    "uuid": "^11.1.0",
     "winston": "^3.8.2",
     "workbox-window": "^7.0.0",
     "yup": "^1.2.0",
